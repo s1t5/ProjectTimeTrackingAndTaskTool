@@ -1,0 +1,72 @@
+@model ProjektZeiterfassung.ViewModels.ProjektViewModel
+
+@{
+    ViewData["Title"] = "Create New Project";
+}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Create New Project</h2>
+    </div>
+    <div class="card-body">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Projektbezeichnung" class="control-label">Project Name</label>
+                        <input asp-for="Projektbezeichnung" class="form-control" />
+                        <span asp-validation-for="Projektbezeichnung" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Kundennummer" class="control-label">Customer</label>
+                        <select asp-for="Kundennummer" class="form-select"
+                                asp-items="@(new SelectList(Model.KundenListe, "Kundennr", "Kundenname"))">
+                            <option value="">-- Select Customer --</option>
+                        </select>
+                        <span asp-validation-for="Kundennummer" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="InkludierteStunden" class="control-label">Included Hours</label>
+                        <input asp-for="InkludierteStunden" class="form-control" />
+                        <span asp-validation-for="InkludierteStunden" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="NachberechneteMinuten" class="control-label">Additional Minutes</label>
+                        <input asp-for="NachberechneteMinuten" class="form-control" />
+                        <span asp-validation-for="NachberechneteMinuten" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Bemerkung" class="control-label">Comment</label>
+                <textarea asp-for="Bemerkung" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Bemerkung" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Save
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

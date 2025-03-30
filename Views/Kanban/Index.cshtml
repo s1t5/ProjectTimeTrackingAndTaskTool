@@ -1,0 +1,129 @@
+﻿@model IEnumerable<ProjektZeiterfassung.Models.Projekt>
+
+@{
+    ViewData["Title"] = "Kanban Boards";
+
+    // Safe conversions with null checks
+    var assignedTasks = ViewBag.AssignedTasks as List<ProjektZeiterfassung.Models.KanbanCard> ?? new List<ProjektZeiterfassung.Models.KanbanCard>();
+    var mitarbeiterNr = ViewBag.MitarbeiterNr as int?;
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2>Kanban Boards</h2>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Project Number</th>
+                                <th>Project Name</th>
+                                <th>Customer</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model == null || !Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center">No projects found.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var projekt in Model)
+                                {
+                                    <tr>
+                                        <td>@projekt.Projektnummer</td>
+                                        <td>@projekt.Projektbezeichnung</td>
+                                        <td>@projekt.Kunde?.Kundenname</td>
+                                        <td>
+                                            <a asp-action="Board" asp-route-id="@projekt.Projektnummer" class="btn btn-outline-primary">
+                                                <i class="bi bi-kanban"></i> Open Board
+                                            </a>
+                                            <a asp-action="Buckets" asp-route-id="@projekt.Projektnummer" class="btn btn-outline-secondary">
+                                                <i class="bi bi-gear"></i> Manage Buckets
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3>My Upcoming Tasks</h3>
+            </div>
+            <div class="card-body">
+                @if (mitarbeiterNr.HasValue && assignedTasks != null && assignedTasks.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var task in assignedTasks)
+                        {
+                            var dueClass = "";
+                            if (task.FaelligAm.HasValue)
+                            {
+                                var daysLeft = (task.FaelligAm.Value - DateTime.Today).Days;
+                                dueClass = daysLeft < 0 ? "list-group-item-danger" :
+                                daysLeft <= 2 ? "list-group-item-warning" : "";
+                            }
+
+                            <a href="@Url.Action("Board", new { id = task.ProjektID })"
+                               class="list-group-item list-group-item-action @dueClass">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@task.Titel</h5>
+                                    @if (task.FaelligAm.HasValue)
+                                    {
+                                        <small>@task.FaelligAm.Value.ToString("MM/dd/yyyy")</small>
+                                    }
+                                </div>
+                                <p class="mb-1">
+                                    @if (!string.IsNullOrEmpty(task.Beschreibung) && task.Beschreibung.Length > 60)
+                                    {
+                                        @(task.Beschreibung.Substring(0, 60) + "...")
+                                    }
+                                    else
+                                    {
+                                        @task.Beschreibung
+                                    }
+                                </p>
+                                <small>@task.Projekt?.Projektbezeichnung - @task.Bucket?.Name</small>
+                            </a>
+                        }
+                    </div>
+                }
+                else if (mitarbeiterNr.HasValue)
+                {
+                    <p class="text-muted">No upcoming tasks found.</p>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <p>
+                            To view your tasks, please log in first.
+                            Enter your employee number in the time tracking system.
+                        </p>
+                        <a asp-controller="Zeiterfassung" asp-action="Index" class="btn btn-primary">
+                            <i class="bi bi-clock"></i> Go to Time Tracking
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>

@@ -1,0 +1,17 @@
+@model int
+
+@{
+    ViewData["Title"] = "Booking Successful";
+}
+
+<div class="card mt-4">
+    <div class="card-header bg-success text-white">
+        <h2><i class="bi bi-check-circle"></i> Time Booking Successful</h2>
+    </div>
+    <div class="card-body">
+        <p>The time booking was successfully saved with the ID <strong>@Model</strong>.</p>
+        <div class="mt-3">
+            <a asp-action="Index" class="btn btn-primary">Create New Time Booking</a>
+        </div>
+    </div>
+</div>

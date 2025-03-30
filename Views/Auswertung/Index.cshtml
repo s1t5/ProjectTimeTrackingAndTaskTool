@@ -1,0 +1,229 @@
+﻿@model ProjektZeiterfassung.ViewModels.AuswertungViewModel
+@using ProjektZeiterfassung.ViewModels
+@{
+    ViewData["Title"] = "Time Tracking - Reporting";
+}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2>Time Tracking - Reporting</h2>
+    </div>
+    <div class="card-body">
+        <form method="get" action="@Url.Action("Index")" class="row g-3">
+            <div class="col-md-3">
+                <label asp-for="VonDatum" class="form-label">From Date</label>
+                <input asp-for="VonDatum" class="form-control" type="date" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="BisDatum" class="form-label">To Date</label>
+                <input asp-for="BisDatum" class="form-control" type="date" />
+            </div>
+            <div class="col-md-3">
+                <label asp-for="MitarbeiterId" class="form-label">Employee</label>
+                <select asp-for="MitarbeiterId" class="form-select">
+                    <option value="">All Employees</option>
+                    @foreach (var ma in Model.Mitarbeiter)
+                    {
+                        <option value="@ma.MitarbeiterNr">@ma.Vorname @ma.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="ProjektId" class="form-label">Project</label>
+                <select asp-for="ProjektId" class="form-select">
+                    <option value="">All Projects</option>
+                    @foreach (var p in Model.Projekte)
+                    {
+                        <option value="@p.Projektnummer">@p.Projektbezeichnung</option>
+                    }
+                </select>
+            </div>
+            <div class="col-12">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                    <a href="@Url.Action("ExportCsv", new { vonDatum = Model.VonDatum, bisDatum = Model.BisDatum, mitarbeiterId = Model.MitarbeiterId, projektId = Model.ProjektId })"
+                       class="btn btn-success">
+                        <i class="bi bi-download"></i> Export CSV
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+<div class="card mb-4">
+    <div class="card-header">
+        <h3>Summary</h3>
+        <p class="text-muted mb-0">
+            Period: @Model.VonDatum.ToString("dd.MM.yyyy") to @Model.BisDatum.ToString("dd.MM.yyyy") |
+            Total time: <strong>@Model.GesamtzeitAlleFormatiert</strong>
+        </p>
+    </div>
+    <div class="card-body">
+        @if (!Model.Zusammenfassung.Any())
+        {
+            <p class="text-muted">No data found for the selected period.</p>
+        }
+        else
+        {
+            <div class="accordion" id="zusammenfassungAccordion">
+                @foreach (var mitarbeiter in Model.Zusammenfassung)
+                {
+                    <div class="accordion-item">
+                        <h4 class="accordion-header">
+                            <button class="accordion-button @(mitarbeiter == Model.Zusammenfassung.First() ? "" : "collapsed")"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse-@mitarbeiter.MitarbeiterId"
+                                    aria-expanded="@(mitarbeiter == Model.Zusammenfassung.First() ? "true" : "false")"
+                                    aria-controls="collapse-@mitarbeiter.MitarbeiterId">
+                                @mitarbeiter.MitarbeiterName - Total time: @mitarbeiter.GesamtzeitFormatiert
+                            </button>
+                        </h4>
+                        <div id="collapse-@mitarbeiter.MitarbeiterId"
+                             class="accordion-collapse collapse @(mitarbeiter == Model.Zusammenfassung.First() ? "show" : "")"
+                             data-bs-parent="#zusammenfassungAccordion">
+                            <div class="accordion-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Project</th>
+                                                <th class="text-end">Total Time</th>
+                                                <th class="text-end">Billable</th>
+                                                <th class="text-end">Travel</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var projekt in mitarbeiter.ProjektZeiten)
+                                            {
+                                                <tr>
+                                                    <td>@projekt.ProjektName</td>
+                                                    <td class="text-end">@projekt.GesamtzeitFormatiert</td>
+                                                    <td class="text-end">@projekt.BerechenbareZeitFormatiert</td>
+                                                    <td class="text-end">@projekt.AnfahrtszeitFormatiert</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-primary">
+                                                <th>Total</th>
+                                                <th class="text-end">@mitarbeiter.GesamtzeitFormatiert</th>
+                                                <th class="text-end">
+                                                    @ProjektZeiterfassung.ViewModels.AuswertungViewModel.FormatMinutesToTime(mitarbeiter.ProjektZeiten.Sum(p => p.BerechenbareZeitInMinuten))
+                                                </th>
+                                                <th class="text-end">
+                                                    @ProjektZeiterfassung.ViewModels.AuswertungViewModel.FormatMinutesToTime(mitarbeiter.ProjektZeiten.Sum(p => p.AnfahrtszeitInMinuten))
+                                                </th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+<div class="card">
+    <div class="card-header">
+        <h3>Detailed Time Tracking</h3>
+    </div>
+    <div class="card-body">
+        @if (!Model.Aktivitaeten.Any())
+        {
+            <p class="text-muted">No data found for the selected period.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped" id="aktivitaetenTabelle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Employee</th>
+                            <th>Customer</th>
+                            <th>Project</th>
+                            <th>Description</th>
+                            <th>Duration</th>
+                            <th>Billable</th>
+                            <th>Travel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var aktivitaet in Model.Aktivitaeten.OrderBy(a => a.Datum).ThenBy(a => a.Start))
+                        {
+                            <tr>
+                                <td>@aktivitaet.Datum.ToString("dd.MM.yyyy")</td>
+                                <td>@aktivitaet.Start.ToString(@"hh\:mm") - @aktivitaet.Ende.ToString(@"hh\:mm")</td>
+                                <td>@($"{aktivitaet.MitarbeiterObj?.Vorname ?? ""} {aktivitaet.MitarbeiterObj?.Name ?? ""}")</td>
+                                <td>@aktivitaet.Projekt?.Kunde?.Kundenname</td>
+                                <td>@aktivitaet.Projekt?.Projektbezeichnung</td>
+                                <td>@aktivitaet.Beschreibung</td>
+                                <td>
+                                    @{
+                                        var dauer = aktivitaet.Ende - aktivitaet.Start;
+                                        @($"{(int)dauer.TotalHours}:{dauer.Minutes:D2} h")
+                                    }
+                                </td>
+                                <td>
+                                    @if (aktivitaet.Berechnen == 1)
+                                    {
+                                        <span class="badge bg-success">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">No</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (aktivitaet.Anfahrt == 1)
+                                    {
+                                        <span class="badge bg-info">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">No</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+@section Styles {
+    <style>
+        /* Optional styling for the table */
+        #aktivitaetenTabelle tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+    </style>
+}
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" />
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#aktivitaetenTabelle').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/en-GB.json"
+                },
+                "order": [[0, "desc"], [1, "desc"]],
+                "pageLength": 25
+            });
+        });
+    </script>
+}

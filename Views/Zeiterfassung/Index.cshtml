@@ -1,0 +1,307 @@
+@model ProjektZeiterfassung.ViewModels.ZeiterfassungViewModel
+
+@{
+    ViewData["Title"] = "Project Time Tracking";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2>Project Time Tracking</h2>
+            </div>
+            <div class="card-body">
+                <form asp-action="Index" id="zeiterfassungForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="MitarbeiterNr" class="control-label">Employee Number</label>
+                                <div class="input-group">
+                                    <input asp-for="MitarbeiterNr" class="form-control" id="mitarbeiterNr" />
+                                    <button type="button" class="btn btn-outline-secondary" id="checkMitarbeiter">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="MitarbeiterNr" class="text-danger"></span>
+                                <div id="mitarbeiterInfo" class="text-info mt-1">
+                                    @if (Model.AktuellerMitarbeiter != null)
+                                    {
+                                        <strong>@Model.AktuellerMitarbeiter.Vorname @Model.AktuellerMitarbeiter.Name</strong>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Projektnummer" class="control-label">Project Number</label>
+                                <select asp-for="Projektnummer" class="form-select" id="projektDropdown"
+                                        asp-items="@(new SelectList(Model.ProjektListe, "Projektnummer", "Projektbezeichnung"))">
+                                    <option value="">-- Select Project --</option>
+                                </select>
+                                <span asp-validation-for="Projektnummer" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Datum" class="control-label">Date</label>
+                                <input asp-for="Datum" class="form-control" type="date" />
+                                <span asp-validation-for="Datum" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Startzeit" class="control-label">Start Time</label>
+                                <input asp-for="Startzeit" class="form-control" id="startzeit" />
+                                <span asp-validation-for="Startzeit" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Endzeit" class="control-label">End Time</label>
+                                <input asp-for="Endzeit" class="form-control" id="endzeit" />
+                                <span asp-validation-for="Endzeit" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label asp-for="Beschreibung" class="control-label">Description</label>
+                                <textarea asp-for="Beschreibung" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="Beschreibung" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="Berechnen" class="form-check-input" />
+                                <label asp-for="Berechnen" class="form-check-label">Billable</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input asp-for="Anfahrt" class="form-check-input" />
+                                <label asp-for="Anfahrt" class="form-check-label">Travel</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <button type="button" id="startStopButton" class="btn btn-primary">
+                                        <i class="bi bi-play-fill"></i> Start
+                                    </button>
+                                    <span id="timerDisplay" class="ms-2 fs-5">00:00:00</span>
+                                </div>
+                                <button type="submit" class="btn btn-success">Book Time</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>Actions</h3>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a asp-controller="Kunde" asp-action="Create" class="btn btn-outline-primary">Create Customer</a>
+                    <a asp-controller="Projekt" asp-action="Create" class="btn btn-outline-primary">Create Project</a>
+                    <a asp-controller="Kunde" asp-action="Index" class="btn btn-outline-secondary">Manage Customers</a>
+                    <a asp-controller="Projekt" asp-action="Index" class="btn btn-outline-secondary">Manage Projects</a>
+                    <a asp-controller="Kanban" asp-action="Index" class="btn btn-outline-info">Kanban Boards</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="mitarbeiterAktivitaeten" class="mt-4">
+    <!-- Display the employee's last activities here -->
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3>Last Activities</h3>
+            </div>
+            <div class="card-body">
+                <div id="aktivitaetenListe">
+                    <p class="text-muted">Please select a project to display the last activities.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            let timerInterval;
+            let timerRunning = false;
+            let startTime;
+            let elapsedTime = 0;
+
+            // Timer functions
+            function startTimer() {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateTimer, 1000);
+                timerRunning = true;
+                $("#startStopButton").html('<i class="bi bi-pause-fill"></i> Pause');
+                $("#startStopButton").removeClass("btn-primary").addClass("btn-warning");
+
+                // Set the current time as start time
+                const now = new Date();
+                $("#startzeit").val(`${padZero(now.getHours())}:${padZero(now.getMinutes())}`);
+            }
+
+            function stopTimer() {
+                clearInterval(timerInterval);
+                elapsedTime = Date.now() - startTime;
+                timerRunning = false;
+                $("#startStopButton").html('<i class="bi bi-play-fill"></i> Resume');
+                $("#startStopButton").removeClass("btn-warning").addClass("btn-primary");
+
+                // Set the current time as end time
+                const now = new Date();
+                $("#endzeit").val(`${padZero(now.getHours())}:${padZero(now.getMinutes())}`);
+            }
+
+            function resetTimer() {
+                clearInterval(timerInterval);
+                elapsedTime = 0;
+                updateTimerDisplay();
+                timerRunning = false;
+                $("#startStopButton").html('<i class="bi bi-play-fill"></i> Start');
+                $("#startStopButton").removeClass("btn-warning").addClass("btn-primary");
+            }
+
+            function updateTimer() {
+                elapsedTime = Date.now() - startTime;
+                updateTimerDisplay();
+            }
+
+            function updateTimerDisplay() {
+                const totalSeconds = Math.floor(elapsedTime / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                $("#timerDisplay").text(
+                    `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`
+                );
+            }
+
+            function padZero(num) {
+                return num < 10 ? `0${num}` : num;
+            }
+
+            // Event listeners
+            $("#startStopButton").click(function () {
+                if (timerRunning) {
+                    stopTimer();
+                } else {
+                    startTimer();
+                }
+            });
+
+            // Get employee information and authenticate
+            $("#checkMitarbeiter").click(function () {
+                const mitarbeiterNr = $("#mitarbeiterNr").val();
+                if (mitarbeiterNr) {
+                    $.ajax({
+                        url: '@Url.Action("GetMitarbeiterInfo", "Zeiterfassung")',
+                        data: { mitarbeiterNr: mitarbeiterNr },
+                        type: 'GET',
+                        success: function (result) {
+                            if (result.success) {
+                                $("#mitarbeiterInfo").html(`<strong>${result.vorname} ${result.name}</strong>`);
+
+                                // Load the employee's last activities
+                                $.ajax({
+                                    url: '@Url.Action("GetMitarbeiterAktivitaeten", "Zeiterfassung")',
+                                    data: { mitarbeiterNr: mitarbeiterNr },
+                                    type: 'GET',
+                                    success: function (result) {
+                                        $("#mitarbeiterAktivitaeten").html(result);
+                                    }
+                                });
+
+                                // Authenticate by setting a cookie
+                                $.ajax({
+                                    url: '@Url.Action("VerifyMitarbeiter", "Zeiterfassung")',
+                                    data: { mitarbeiterNr: mitarbeiterNr },
+                                    type: 'POST',
+                                    success: function (authResult) {
+                                        if (authResult.success) {
+                                            console.log('Employee authenticated.');
+                                        }
+                                    }
+                                });
+                            } else {
+                                $("#mitarbeiterInfo").html('<span class="text-danger">Employee not found!</span>');
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Load activities for the selected project
+            $("#projektDropdown").change(function () {
+                const projektNr = $(this).val();
+                if (projektNr) {
+                    $.ajax({
+                        url: '@Url.Action("GetProjektAktivitaeten", "Zeiterfassung")',
+                        data: { projektnummer: projektNr },
+                        type: 'GET',
+                        success: function (result) {
+                            $("#aktivitaetenListe").html(result);
+                        }
+                    });
+                } else {
+                    $("#aktivitaetenListe").html('<p class="text-muted">Please select a project to display the last activities.</p>');
+                }
+            });
+
+            // Form submission
+            $("#zeiterfassungForm").submit(function () {
+                if (timerRunning) {
+                    stopTimer();
+                }
+            });
+
+            // If an employee is already selected, load their activities
+            if ($("#mitarbeiterInfo").text().trim() !== "") {
+                const mitarbeiterNr = $("#mitarbeiterNr").val();
+                if (mitarbeiterNr) {
+                    $.ajax({
+                        url: '@Url.Action("GetMitarbeiterAktivitaeten", "Zeiterfassung")',
+                        data: { mitarbeiterNr: mitarbeiterNr },
+                        type: 'GET',
+                        success: function (result) {
+                            $("#mitarbeiterAktivitaeten").html(result);
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+}

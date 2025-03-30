@@ -1,0 +1,50 @@
+﻿@model IEnumerable<ProjektZeiterfassung.Models.Aktivitaet>
+
+<div class="card">
+    <div class="card-header">
+        <h4>Your Recent Activities</h4>
+    </div>
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Project</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Datum.ToString("dd.MM.yyyy")</td>
+                                <td>@item.Start.ToString(@"hh\:mm") - @item.Ende.ToString(@"hh\:mm")</td>
+                                <td>@item.Projekt?.Projektbezeichnung</td>
+                                <td>@item.Beschreibung</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.AktivitaetsID" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.AktivitaetsID" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">No recent activities found.</p>
+        }
+    </div>
+</div>

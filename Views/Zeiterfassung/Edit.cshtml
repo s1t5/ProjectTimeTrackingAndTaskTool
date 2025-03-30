@@ -1,0 +1,88 @@
+﻿@model ProjektZeiterfassung.ViewModels.AktivitaetEditViewModel
+@{
+    ViewData["Title"] = "Edit Activity";
+}
+<div class="card">
+    <div class="card-header">
+        <h2>Edit Activity</h2>
+    </div>
+    <div class="card-body">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="AktivitaetID" />
+            <input type="hidden" asp-for="MitarbeiterNr" />
+            <input type="hidden" asp-for="Projektnummer" />
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="MitarbeiterName" class="control-label">Employee Name</label>
+                        <input asp-for="MitarbeiterName" class="form-control" readonly />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="ProjektBezeichnung" class="control-label">Project Description</label>
+                        <input asp-for="ProjektBezeichnung" class="form-control" readonly />
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Datum" class="control-label">Date</label>
+                        <input type="date" asp-for="Datum" class="form-control" />
+                        <span asp-validation-for="Datum" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Startzeit" class="control-label">Start Time</label>
+                        <input asp-for="Startzeit" class="form-control" />
+                        <span asp-validation-for="Startzeit" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label asp-for="Endzeit" class="control-label">End Time</label>
+                        <input asp-for="Endzeit" class="form-control" />
+                        <span asp-validation-for="Endzeit" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="form-group">
+                        <label asp-for="Beschreibung" class="control-label">Description</label>
+                        <textarea asp-for="Beschreibung" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Beschreibung" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input asp-for="Berechnen" class="form-check-input" />
+                        <label asp-for="Berechnen" class="form-check-label">Billable</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input asp-for="Anfahrt" class="form-check-input" />
+                        <label asp-for="Anfahrt" class="form-check-label">Travel</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Save
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

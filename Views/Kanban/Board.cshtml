@@ -1,0 +1,382 @@
+﻿@model ProjektZeiterfassung.ViewModels.KanbanBoardViewModel
+@{
+    ViewData["Title"] = $"Kanban Board - {Model.ProjektName}";
+    // List of default priority levels
+    var priorities = new Dictionary<int, (string name, string color)> {
+        { 0, ("Low", "text-muted") },
+        { 1, ("Normal", "text-primary") },
+        { 2, ("High", "text-warning") },
+        { 3, ("Critical", "text-danger") }
+    };
+}
+<div class="d-flex justify-content-between mb-3 align-items-center">
+    <h1>@Model.ProjektName</h1>
+    <div>
+        <a asp-action="CreateCard" asp-route-projektId="@Model.ProjektID" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> New Card
+        </a>
+        <a asp-action="Buckets" asp-route-id="@Model.ProjektID" class="btn btn-outline-secondary">
+            <i class="bi bi-gear"></i> Manage Buckets
+        </a>
+        <a asp-action="Index" class="btn btn-outline-primary">
+            <i class="bi bi1-arrow-left"></i> Back
+        </a>
+    </div>
+</div>
+@if (!string.IsNullOrEmpty(TempData["ErrorMessage"] as string))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<!-- NEW: Show my tasks if available -->
+@if (Model.MeineAufgaben != null && Model.MeineAufgaben.Any())
+{
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+            <h4 class="mb-0">My Upcoming Tasks</h4>
+            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#myTasksCollapse" aria-expanded="true" aria-controls="myTasksCollapse">
+                <i class="bi bi-arrows-collapse"></i>
+            </button>
+        </div>
+        <div class="collapse show" id="myTasksCollapse">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Due</th>
+                                <th>Project</th>
+                                <th>Status</th>
+                                <th>Title</th>
+                                <th>Priority</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var task in Model.MeineAufgaben)
+                            {
+                                var dueClass = "";
+                                if (task.FaelligAm.HasValue)
+                                {
+                                    var daysLeft = (task.FaelligAm.Value - DateTime.Today).Days;
+                                    dueClass = daysLeft < 0 ? "table-danger" :
+                                    daysLeft <= 2 ? "table-warning" : "";
+                                }
+                                <tr class="@dueClass">
+                                    <td>@(task.FaelligAm?.ToString("MM/dd/yyyy") ?? "-")</td>
+                                    <td>
+                                        @if (task.ProjektID != Model.ProjektID)
+                                        {
+                                            <a asp-action="Board" asp-route-id="@task.ProjektID">
+                                                @task.Projekt?.Projektbezeichnung
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            @task.Projekt?.Projektbezeichnung
+                                        }
+                                    </td>
+                                    <td>@task.Bucket?.Name</td>
+                                    <td>@task.Titel</td>
+                                    <td>
+                                        @if (priorities.ContainsKey(task.Prioritaet))
+                                        {
+                                            <span class="@priorities[task.Prioritaet].color">
+                                                @priorities[task.Prioritaet].name
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <a asp-action="EditCard" asp-route-id="@task.CardID" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<div class="kanban-container">
+    @if (Model.Buckets == null || !Model.Buckets.Any())
+    {
+        <div class="alert alert-warning">
+            <p>No buckets defined for this project.</p>
+            <a asp-action="Buckets" asp-route-id="@Model.ProjektID" class="btn btn-primary">
+                Manage Buckets
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="kanban-board">
+            @foreach (var bucket in Model.Buckets)
+            {
+                <div class="kanban-column" data-bucket-id="@bucket.BucketID">
+                    <div class="kanban-column-header" style="background-color: @bucket.Farbe">
+                        <h4>@bucket.Name</h4>
+                        <span class="badge bg-light text-dark">
+                            @(Model.Karten?.Count(c => c.BucketID == bucket.BucketID) ?? 0)
+                        </span>
+                    </div>
+                    <div class="kanban-column-body" id="bucket-@bucket.BucketID">
+                        @if (Model.Karten != null)
+                        {
+                            var bucketCards = Model.Karten.Where(c => c.BucketID == bucket.BucketID).OrderBy(c => c.Position).ToList();
+                            foreach (var card in bucketCards)
+                            {
+                                <div class="kanban-card" data-card-id="@card.CardID" data-position="@card.Position">
+                                    <div class="kanban-card-header">
+                                        <h5 class="kanban-card-title">@card.Titel</h5>
+                                        <div class="kanban-card-actions">
+                                            <a asp-action="EditCard" asp-route-id="@card.CardID" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="DeleteCard" asp-route-id="@card.CardID" class="btn btn-sm btn-outline-danger"
+                                               onclick="return confirm('Are you sure you want to delete this card?');">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="kanban-card-body">
+                                        @if (!string.IsNullOrEmpty(card.Beschreibung))
+                                        {
+                                            <p>@card.Beschreibung</p>
+                                        }
+                                    </div>
+                                    <div class="kanban-card-footer">
+                                        @if (card.ZugewiesenAn.HasValue)
+                                        {
+                                            var mitarbeiter = Model.Mitarbeiter?.FirstOrDefault(m => m.MitarbeiterNr == card.ZugewiesenAn.Value);
+                                            if (mitarbeiter != null)
+                                            {
+                                                <div class="kanban-card-assignee">
+                                                    <i class="bi bi-person-fill"></i>
+                                                    @mitarbeiter.Vorname @mitarbeiter.Name
+                                                </div>
+                                            }
+                                        }
+                                        @if (card.Prioritaet > 0 && priorities.ContainsKey(card.Prioritaet))
+                                        {
+                                            var (name, color) = priorities[card.Prioritaet];
+                                            <div class="kanban-card-priority @color">
+                                                <i class="bi bi-flag-fill"></i> @name
+                                            </div>
+                                        }
+                                        @if (card.FaelligAm.HasValue)
+                                        {
+                                            var daysLeft = (card.FaelligAm.Value.Date - DateTime.Today).Days;
+                                            var dateClass = daysLeft < 0 ? "text-danger" : (daysLeft <= 2 ? "text-warning" : "text-info");
+                                            <div class="kanban-card-due-date @dateClass">
+                                                <i class="bi bi-calendar"></i> @card.FaelligAm.Value.ToString("MM/dd/yyyy")
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="kanban-column-footer">
+                        <a asp-action="CreateCard" asp-route-projektId="@Model.ProjektID" asp-route-bucketId="@bucket.BucketID" class="btn btn-sm btn-outline-success w-100">
+                            <i class="bi bi-plus"></i> Add Card
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+<div id="errorContainer" style="display:none;" class="alert alert-danger alert-dismissible fade show fixed-top mx-auto mt-3" style="max-width:500px; z-index:9999;">
+    <span id="errorMessage"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@section Styles {
+    <style>
+        .kanban-container {
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+
+        .kanban-board {
+            display: flex;
+            min-height: 70vh;
+            gap: 1rem;
+        }
+
+        .kanban-column {
+            flex: 0 0 300px;
+            display: flex;
+            flex-direction: column;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .kanban-column-header {
+            padding: 10px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            border-radius: 4px 4px 0 0;
+            color: white;
+        }
+
+        .kanban-column-body {
+            flex: 1;
+            padding: 10px;
+            min-height: 200px;
+            overflow-y: auto;
+        }
+
+        .kanban-column-footer {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .kanban-card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            cursor: move;
+        }
+
+        .kanban-card-header {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .kanban-card-title {
+            font-size: 1rem;
+            margin: 0;
+            word-break: break-word;
+        }
+
+        .kanban-card-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .kanban-card-body {
+            padding: 10px;
+        }
+
+            .kanban-card-body p {
+                margin-bottom: 0;
+                font-size: 0.9rem;
+                word-break: break-word;
+            }
+
+        .kanban-card-footer {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+
+        .kanban-card-assignee, .kanban-card-priority, .kanban-card-due-date {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dragging {
+            opacity: 0.5;
+        }
+
+        .drag-over {
+            border: 2px dashed #007bff;
+        }
+    </style>
+}
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const columns = document.querySelectorAll('.kanban-column-body');
+            const errorContainer = document.getElementById('errorContainer');
+            const errorMessage = document.getElementById('errorMessage');
+
+            // Helper function to show errors
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorContainer.style.display = 'block';
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    errorContainer.style.display = 'none';
+                }, 5000);
+            }
+
+            columns.forEach(column => {
+                new Sortable(column, {
+                    group: 'kanban',
+                    animation: 150,
+                    ghostClass: 'dragging',
+                    dragClass: 'dragging',
+                    onEnd: function (evt) {
+                        try {
+                            const cardId = parseInt(evt.item.dataset.cardId);
+                            const newBucketId = parseInt(evt.to.id.split('-')[1]);
+                            const newPosition = Array.from(evt.to.children).indexOf(evt.item) + 1;
+
+                            // Update data attributes
+                            evt.item.dataset.position = newPosition;
+
+                            const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                            // Send AJAX request to update card position
+                            fetch('@Url.Action("MoveCard", "Kanban")', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'RequestVerificationToken': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    CardID: cardId,
+                                    NewBucketID: newBucketId,
+                                    NewPosition: newPosition
+                                })
+                            })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    if (!data.success) {
+                                        throw new Error(data.message || 'Unknown server error');
+                                    }
+                                    console.log('Card position updated successfully');
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    showError(`Error updating card position: ${error.message}`);
+                                    // Optionally: Reload board for serious errors
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 2000);
+                                });
+                        } catch (e) {
+                            console.error('JavaScript error:', e);
+                            showError(`JavaScript error: ${e.message}`);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

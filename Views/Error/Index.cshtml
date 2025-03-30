@@ -1,0 +1,32 @@
+﻿@model ProjektZeiterfassung.ViewModels.ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+<div class="card mt-4">
+    <div class="card-header bg-danger text-white">
+        <h2><i class="bi bi-exclamation-triangle"></i> Error</h2>
+    </div>
+    <div class="card-body">
+        <h3>An error has occurred.</h3>
+        @if (Model.ShowRequestId)
+        {
+            <p>
+                <strong>Request ID:</strong> <code>@Model.RequestId</code>
+            </p>
+        }
+        @if (Model.ShowDetails && Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+        {
+            <div class="alert alert-danger mt-3">
+                <h4>Details:</h4>
+                <p>@Model.Message</p>
+                <hr />
+                <pre class="mt-3">@Model.StackTrace</pre>
+            </div>
+        }
+        <div class="mt-3">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                <i class="bi bi-house"></i> Back to Homepage
+            </a>
+        </div>
+    </div>
+</div>

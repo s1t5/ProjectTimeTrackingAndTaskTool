@@ -1,0 +1,52 @@
+﻿@model ProjektZeiterfassung.ViewModels.KanbanBucketViewModel
+
+@{
+    ViewData["Title"] = "Create New Bucket";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h2>Create New Bucket</h2>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreateBucket">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="ProjektID" />
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Name" class="control-label">Name</label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Reihenfolge" class="control-label">Order</label>
+                        <input asp-for="Reihenfolge" class="form-control" />
+                        <small class="form-text text-muted">The order determines the bucket's position on the board (lower numbers first).</small>
+                        <span asp-validation-for="Reihenfolge" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Farbe" class="control-label">Color</label>
+                        <input asp-for="Farbe" type="color" class="form-control form-control-color" value="#6c757d" />
+                        <small class="form-text text-muted">Select a color for the bucket header.</small>
+                        <span asp-validation-for="Farbe" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Buckets" asp-route-id="@Model.ProjektID" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

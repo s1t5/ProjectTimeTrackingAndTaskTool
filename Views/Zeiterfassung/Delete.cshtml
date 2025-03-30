@@ -1,0 +1,48 @@
+﻿@model ProjektZeiterfassung.ViewModels.AktivitaetDeleteViewModel
+
+@{
+    ViewData["Title"] = "Delete Activity";
+}
+
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h2><i class="bi bi-exclamation-triangle"></i> Delete Activity</h2>
+    </div>
+    <div class="card-body">
+        <p class="alert alert-warning">
+            <i class="bi bi-exclamation-circle"></i> Are you sure you want to delete this activity? This action cannot be undone.
+        </p>
+
+        <dl class="row">
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Datum)</dt>
+            <dd class="col-sm-9">@Model.Datum.ToString("dd.MM.yyyy")</dd>
+
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Startzeit)</dt>
+            <dd class="col-sm-9">@Model.Startzeit.ToString(@"hh\:mm")</dd>
+
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Endzeit)</dt>
+            <dd class="col-sm-9">@Model.Endzeit.ToString(@"hh\:mm")</dd>
+
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.MitarbeiterName)</dt>
+            <dd class="col-sm-9">@Model.MitarbeiterName</dd>
+
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.ProjektBezeichnung)</dt>
+            <dd class="col-sm-9">@Model.ProjektBezeichnung</dd>
+
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Beschreibung)</dt>
+            <dd class="col-sm-9">@Model.Beschreibung</dd>
+
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Berechnen)</dt>
+            <dd class="col-sm-9">@(Model.Berechnen ? "Yes" : "No")</dd>
+
+            <dt class="col-sm-3">@Html.DisplayNameFor(model => model.Anfahrt)</dt>
+            <dd class="col-sm-9">@(Model.Anfahrt ? "Yes" : "No")</dd>
+        </dl>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="AktivitaetID" />
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Delete</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>

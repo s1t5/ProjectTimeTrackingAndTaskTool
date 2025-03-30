@@ -1,0 +1,113 @@
+﻿@model ProjektZeiterfassung.ViewModels.KanbanCardViewModel
+
+@{
+    ViewData["Title"] = "Create New Card";
+}
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h2>Create New Card</h2>
+            </div>
+            <div class="card-body">
+                @if (!ViewData.ModelState.IsValid && ViewData.ModelState[""]?.Errors.Count > 0)
+                {
+                    <div class="alert alert-danger">
+                        @foreach (var error in ViewData.ModelState[""].Errors)
+                        {
+                            <p>@error.ErrorMessage</p>
+                        }
+                    </div>
+                }
+
+                <form asp-action="CreateCard">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" asp-for="ProjektID" />
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Titel" class="control-label">Title</label>
+                        <input asp-for="Titel" class="form-control" />
+                        <span asp-validation-for="Titel" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Beschreibung" class="control-label">Description</label>
+                        <textarea asp-for="Beschreibung" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Beschreibung" class="text-danger"></span>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="BucketID" class="control-label">Bucket</label>
+                                <select asp-for="BucketID" class="form-select">
+                                    @if (Model.Buckets != null)
+                                    {
+                                        foreach (var bucket in Model.Buckets.OrderBy(b => b.Reihenfolge))
+                                        {
+                                            <option value="@bucket.BucketID">@bucket.Name</option>
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="BucketID" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ZugewiesenAn" class="control-label">Assigned To</label>
+                                <select asp-for="ZugewiesenAn" class="form-select">
+                                    <option value="">-- Unassigned --</option>
+                                    @if (Model.Mitarbeiter != null)
+                                    {
+                                        foreach (var mitarbeiter in Model.Mitarbeiter.OrderBy(m => m.Name).ThenBy(m => m.Vorname))
+                                        {
+                                            <option value="@mitarbeiter.MitarbeiterNr">@mitarbeiter.Vorname @mitarbeiter.Name</option>
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="ZugewiesenAn" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="Prioritaet" class="control-label">Priority</label>
+                                <select asp-for="Prioritaet" class="form-select">
+                                    <option value="0">Low</option>
+                                    <option value="1" selected>Normal</option>
+                                    <option value="2">High</option>
+                                    <option value="3">Critical</option>
+                                </select>
+                                <span asp-validation-for="Prioritaet" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="FaelligAm" class="control-label">Due Date</label>
+                                <input asp-for="FaelligAm" class="form-control" type="date" />
+                                <span asp-validation-for="FaelligAm" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden: Created by field -->
+                    <input type="hidden" asp-for="ErstelltVon" />
+
+                    <div class="form-group mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Board" asp-route-id="@Model.ProjektID" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
