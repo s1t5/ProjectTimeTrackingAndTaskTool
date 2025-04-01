@@ -59,12 +59,17 @@ cd time-tracking-system
 
 This password must now have been stored in a total of four locations.
 
-3. Build and start containers:  
+3. Make database initialisation script executable
+```bash
+chmod +x ./docker/db/*
+```
+
+4. Build and start containers:  
 ```bash
 docker compose up -d --build
 ```
 
-4. Access the application:  
+5. Access the application:  
 - Web Interface: http://localhost:80  
 
 
