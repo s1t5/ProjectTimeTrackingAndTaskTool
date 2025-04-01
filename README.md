@@ -61,7 +61,7 @@ This password must now have been stored in a total of four locations.
 
 3. Build and start containers:  
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 4. Access the application:  
@@ -85,12 +85,12 @@ docker-compose up -d --build
 
 **Stop containers:**  
 ```bash 
-docker-compose down
+docker compose down
 ```
 
 **Stop and remove volumes (Warning: Deletes data):**  
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ## 🔐 Security Note  
