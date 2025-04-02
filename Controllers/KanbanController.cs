@@ -28,6 +28,15 @@ namespace ProjektZeiterfassung.Controllers
                     .OrderBy(p => p.Projektbezeichnung)
                     .ToListAsync();
 
+                // Count tasks for each project
+                var projektTaskCounts = await _context.KanbanCards
+                    .Where(c => !c.Erledigt)
+                    .GroupBy(c => c.ProjektID)
+                    .Select(g => new { ProjectId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.ProjectId, x => x.Count);
+                
+                ViewBag.ProjektTaskCounts = projektTaskCounts;
+
                 // Ensure ViewBag properties are always initialized
                 ViewBag.AssignedTasks = new List<KanbanCard>();
                 ViewBag.MitarbeiterNr = null;
@@ -37,7 +46,6 @@ namespace ProjektZeiterfassung.Controllers
                     int.TryParse(mitarbeiterNrStr, out int parsedMitarbeiterNr))
                 {
                     ViewBag.MitarbeiterNr = parsedMitarbeiterNr;
-
                     // Load assigned tasks for overview
                     var assignedTasks = await _context.KanbanCards
                         .Include(c => c.Projekt)
@@ -46,13 +54,11 @@ namespace ProjektZeiterfassung.Controllers
                         .OrderBy(c => c.FaelligAm)
                         .Take(10)
                         .ToListAsync();
-
                     if (assignedTasks.Any())
                     {
                         ViewBag.AssignedTasks = assignedTasks;
                     }
                 }
-
                 return View(projekte);
             }
             catch (Exception ex)

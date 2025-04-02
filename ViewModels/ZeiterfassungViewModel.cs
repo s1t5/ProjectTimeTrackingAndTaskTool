@@ -32,13 +32,17 @@ namespace ProjektZeiterfassung.ViewModels
         public string? Beschreibung { get; set; }
 
         [Display(Name = "Billable")]
-        public bool Berechnen { get; set; } = true;  // Standardm‰ﬂig aktiviert
+        public bool Berechnen { get; set; } = true; 
 
         [Display(Name = "Travel")]
         public bool Anfahrt { get; set; }
 
         public List<Projekt>? ProjektListe { get; set; }
+
         public List<Aktivitaet>? LetzteAktivitaeten { get; set; }
+
         public Mitarbeiter? AktuellerMitarbeiter { get; set; }
+        
+        public List<KanbanCard>? AnstehendeAufgaben { get; set; }
     }
 }

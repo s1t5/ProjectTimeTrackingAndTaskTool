@@ -1,8 +1,6 @@
 ﻿@model IEnumerable<ProjektZeiterfassung.Models.Projekt>
-
 @{
     ViewData["Title"] = "Kanban Boards";
-
     // Safe conversions with null checks
     var assignedTasks = ViewBag.AssignedTasks as List<ProjektZeiterfassung.Models.KanbanCard> ?? new List<ProjektZeiterfassung.Models.KanbanCard>();
     var mitarbeiterNr = ViewBag.MitarbeiterNr as int?;
@@ -16,12 +14,13 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover" id="projectsTable">
                         <thead>
                             <tr>
-                                <th>Project Number</th>
-                                <th>Project Name</th>
-                                <th>Customer</th>
+                                <th data-sort="number">Project Number</th>
+                                <th data-sort="string">Project Name</th>
+                                <th data-sort="string">Customer</th>
+                                <th data-sort="number">Tasks</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -29,24 +28,33 @@
                             @if (Model == null || !Model.Any())
                             {
                                 <tr>
-                                    <td colspan="4" class="text-center">No projects found.</td>
+                                    <td colspan="5" class="text-center">No projects found.</td>
                                 </tr>
                             }
                             else
                             {
                                 foreach (var projekt in Model)
                                 {
+                                    // Get task count from ViewBag if it exists
+                                    int taskCount = ViewBag.ProjektTaskCounts != null && 
+                                                   ViewBag.ProjektTaskCounts.ContainsKey(projekt.Projektnummer) 
+                                                   ? ViewBag.ProjektTaskCounts[projekt.Projektnummer] 
+                                                   : 0;
+                                    
                                     <tr>
                                         <td>@projekt.Projektnummer</td>
                                         <td>@projekt.Projektbezeichnung</td>
                                         <td>@projekt.Kunde?.Kundenname</td>
+                                        <td>@taskCount</td>
                                         <td>
-                                            <a asp-action="Board" asp-route-id="@projekt.Projektnummer" class="btn btn-outline-primary">
-                                                <i class="bi bi-kanban"></i> Open Board
-                                            </a>
-                                            <a asp-action="Buckets" asp-route-id="@projekt.Projektnummer" class="btn btn-outline-secondary">
-                                                <i class="bi bi-gear"></i> Manage Buckets
-                                            </a>
+                                            <div class="btn-group d-flex" role="group">
+                                                <a asp-action="Board" asp-route-id="@projekt.Projektnummer" class="btn btn-outline-primary w-130">
+                                                    <i class="bi bi-kanban"></i> Open
+                                                </a>
+                                                <a asp-action="Buckets" asp-route-id="@projekt.Projektnummer" class="btn btn-outline-secondary w-130">
+                                                    <i class="bi bi-gear"></i> Buckets
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 }
@@ -57,10 +65,9 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-4">
         <div class="card">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header">
                 <h3>My Upcoming Tasks</h3>
             </div>
             <div class="card-body">
@@ -76,7 +83,6 @@
                                 dueClass = daysLeft < 0 ? "list-group-item-danger" :
                                 daysLeft <= 2 ? "list-group-item-warning" : "";
                             }
-
                             <a href="@Url.Action("Board", new { id = task.ProjektID })"
                                class="list-group-item list-group-item-action @dueClass">
                                 <div class="d-flex w-100 justify-content-between">
@@ -127,3 +133,62 @@
         <i class="bi bi-arrow-left"></i> Back
     </a>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Table sorting functionality
+            $("#projectsTable th[data-sort]").each(function() {
+                $(this).css('cursor', 'pointer');
+                $(this).append(' <i class="bi bi-arrow-down-up text-muted"></i>');
+            });
+
+            $("#projectsTable th[data-sort]").click(function() {
+                var table = $(this).parents('table').eq(0);
+                var rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()));
+                var dir = $(this).hasClass('asc') ? 'desc' : 'asc';
+                
+                // Update sorting indicators
+                table.find('th').removeClass('asc desc');
+                $(this).addClass(dir);
+                table.find('th i').removeClass('bi-arrow-down bi-arrow-up').addClass('bi-arrow-down-up text-muted');
+                
+                // Update icon based on direction
+                if (dir === 'asc') {
+                    $(this).find('i').removeClass('bi-arrow-down-up text-muted').addClass('bi-arrow-up');
+                } else {
+                    $(this).find('i').removeClass('bi-arrow-down-up text-muted').addClass('bi-arrow-down');
+                }
+                
+                // If direction is desc, reverse the array
+                if (dir === 'desc') rows = rows.reverse();
+                
+                // Reattach rows to table
+                for (var i = 0; i < rows.length; i++) {
+                    table.append(rows[i]);
+                }
+            });
+
+            // Comparison function for sorting
+            function comparer(index) {
+                var sortType = $("#projectsTable th").eq(index).data('sort');
+                
+                return function(a, b) {
+                    var valA = getCellValue(a, index);
+                    var valB = getCellValue(b, index);
+                    
+                    if (sortType === 'number') {
+                        return parseFloat(valA) - parseFloat(valB);
+                    } else {
+                        return valA.toString().localeCompare(valB);
+                    }
+                };
+            }
+
+            // Helper function to get cell value
+            function getCellValue(row, index) {
+                return $(row).children('td').eq(index).text();
+            }
+        });
+    </script>
+}

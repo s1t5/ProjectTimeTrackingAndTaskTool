@@ -9,7 +9,6 @@ namespace ProjektZeiterfassung.Controllers
     public class ZeiterfassungController : Controller
     {
         private readonly ProjektDbContext _context;
-
         // Cookie name for employee number - public to be used by other controllers
         public const string MitarbeiterNrCookieName = "LastMitarbeiterNr";
 
@@ -53,14 +52,25 @@ namespace ProjektZeiterfassung.Controllers
                     int.TryParse(mitarbeiterNrStr, out int mitarbeiterNr))
                 {
                     viewModel.MitarbeiterNr = mitarbeiterNr;
-
                     // Load employee data immediately
                     var mitarbeiter = await _context.Mitarbeiter
                         .FirstOrDefaultAsync(m => m.MitarbeiterNr == mitarbeiterNr);
-
                     if (mitarbeiter != null)
                     {
                         viewModel.AktuellerMitarbeiter = mitarbeiter;
+
+                        // NEUE FUNKTIONALITÄT: Lade anstehende Aufgaben des Mitarbeiters
+                        var upcomingTasks = await _context.KanbanCards
+                            .Include(c => c.Projekt)
+                            .Include(c => c.Bucket)
+                            .Where(c => c.ZugewiesenAn == mitarbeiterNr && 
+                                       !c.Erledigt && 
+                                       c.FaelligAm.HasValue)
+                            .OrderBy(c => c.FaelligAm)
+                            .Take(4)
+                            .ToListAsync();
+
+                        viewModel.AnstehendeAufgaben = upcomingTasks;
                     }
                 }
 
@@ -70,7 +80,6 @@ namespace ProjektZeiterfassung.Controllers
             {
                 // Log error for later analysis
                 Console.WriteLine($"Error loading projects: {ex.Message}");
-
                 // Fallback solution to still display the page
                 var viewModel = new ZeiterfassungViewModel
                 {
@@ -78,7 +87,6 @@ namespace ProjektZeiterfassung.Controllers
                     Datum = DateTime.Today,
                     Berechnen = true // Default is enabled
                 };
-
                 ModelState.AddModelError(string.Empty, "Error loading project data. Please try again later.");
                 return View(viewModel);
             }
@@ -379,7 +387,7 @@ namespace ProjektZeiterfassung.Controllers
                     .Where(a => a.Projektnummer == projektnummer)
                     .OrderByDescending(a => a.Datum)
                     .ThenByDescending(a => a.Start)
-                    .Take(500)
+                    .Take(200)
                     .Select(a => new Aktivitaet
                     {
                         AktivitaetsID = a.AktivitaetsID,

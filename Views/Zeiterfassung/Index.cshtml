@@ -1,7 +1,13 @@
 @model ProjektZeiterfassung.ViewModels.ZeiterfassungViewModel
-
 @{
     ViewData["Title"] = "Project Time Tracking";
+    // Dictionary für Prioritätsfarben und -namen
+    var priorities = new Dictionary<int, (string name, string color)> {
+        { 0, ("Low", "text-muted") },
+        { 1, ("Normal", "text-primary") },
+        { 2, ("High", "text-warning") },
+        { 3, ("Critical", "text-danger") }
+    };
 }
 
 <div class="row">
@@ -13,7 +19,6 @@
             <div class="card-body">
                 <form asp-action="Index" id="zeiterfassungForm">
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -44,7 +49,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <div class="form-group">
@@ -68,7 +72,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="form-group">
@@ -78,7 +81,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-check">
@@ -93,7 +95,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row mt-4">
                         <div class="col-md-12">
                             <div class="d-flex justify-content-between">
@@ -111,22 +112,64 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h3>Actions</h3>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a asp-controller="Kunde" asp-action="Create" class="btn btn-outline-primary">Create Customer</a>
-                    <a asp-controller="Projekt" asp-action="Create" class="btn btn-outline-primary">Create Project</a>
-                    <a asp-controller="Kunde" asp-action="Index" class="btn btn-outline-secondary">Manage Customers</a>
-                    <a asp-controller="Projekt" asp-action="Index" class="btn btn-outline-secondary">Manage Projects</a>
-                    <a asp-controller="Kanban" asp-action="Index" class="btn btn-outline-info">Kanban Boards</a>
+        <!-- BEREICH "My Upcoming Tasks" -->
+        @if (Model.AnstehendeAufgaben != null && Model.AnstehendeAufgaben.Any())
+        {
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>My Upcoming Tasks</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group">
+                        @foreach (var task in Model.AnstehendeAufgaben)
+                        {
+                            var dueClass = "";
+                            if (task.FaelligAm.HasValue)
+                            {
+                                var daysLeft = (task.FaelligAm.Value - DateTime.Today).Days;
+                                dueClass = daysLeft < 0 ? "list-group-item-danger" :
+                                daysLeft <= 2 ? "list-group-item-warning" : "";
+                            }
+                            <a href="@Url.Action("Board", "Kanban", new { id = task.ProjektID })"
+                               class="list-group-item list-group-item-action @dueClass">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@task.Titel</h5>
+                                    @if (task.FaelligAm.HasValue)
+                                    {
+                                        <small>@task.FaelligAm.Value.ToString("dd.MM.yyyy")</small>
+                                    }
+                                </div>
+                                <p class="mb-1">
+                                    @if (!string.IsNullOrEmpty(task.Beschreibung) && task.Beschreibung.Length > 60)
+                                    {
+                                        @(task.Beschreibung.Substring(0, 60) + "...")
+                                    }
+                                    else
+                                    {
+                                        @task.Beschreibung
+                                    }
+                                </p>
+                                <small>
+                                    @task.Projekt?.Projektbezeichnung - @task.Bucket?.Name
+                                    @if (priorities.ContainsKey(task.Prioritaet))
+                                    {
+                                        <span class="@priorities[task.Prioritaet].color ms-2">
+                                            (@priorities[task.Prioritaet].name Priority)
+                                        </span>
+                                    }
+                                </small>
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="@Url.Action("Index", "Kanban")" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-kanban"></i> View All Tasks
+                    </a>
                 </div>
             </div>
-        </div>
+        }
     </div>
 </div>
 
@@ -159,7 +202,6 @@
             let timerRunning = false;
             let startTime;
             let elapsedTime = 0;
-
             // Timer functions
             function startTimer() {
                 startTime = Date.now() - elapsedTime;
@@ -167,24 +209,20 @@
                 timerRunning = true;
                 $("#startStopButton").html('<i class="bi bi-pause-fill"></i> Pause');
                 $("#startStopButton").removeClass("btn-primary").addClass("btn-warning");
-
                 // Set the current time as start time
                 const now = new Date();
                 $("#startzeit").val(`${padZero(now.getHours())}:${padZero(now.getMinutes())}`);
             }
-
             function stopTimer() {
                 clearInterval(timerInterval);
                 elapsedTime = Date.now() - startTime;
                 timerRunning = false;
                 $("#startStopButton").html('<i class="bi bi-play-fill"></i> Resume');
                 $("#startStopButton").removeClass("btn-warning").addClass("btn-primary");
-
                 // Set the current time as end time
                 const now = new Date();
                 $("#endzeit").val(`${padZero(now.getHours())}:${padZero(now.getMinutes())}`);
             }
-
             function resetTimer() {
                 clearInterval(timerInterval);
                 elapsedTime = 0;
@@ -193,27 +231,22 @@
                 $("#startStopButton").html('<i class="bi bi-play-fill"></i> Start');
                 $("#startStopButton").removeClass("btn-warning").addClass("btn-primary");
             }
-
             function updateTimer() {
                 elapsedTime = Date.now() - startTime;
                 updateTimerDisplay();
             }
-
             function updateTimerDisplay() {
                 const totalSeconds = Math.floor(elapsedTime / 1000);
                 const hours = Math.floor(totalSeconds / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
-
                 $("#timerDisplay").text(
                     `${padZero(hours)}:${padZero(minutes)}:${padZero(seconds)}`
                 );
             }
-
             function padZero(num) {
                 return num < 10 ? `0${num}` : num;
             }
-
             // Event listeners
             $("#startStopButton").click(function () {
                 if (timerRunning) {
@@ -222,7 +255,6 @@
                     startTimer();
                 }
             });
-
             // Get employee information and authenticate
             $("#checkMitarbeiter").click(function () {
                 const mitarbeiterNr = $("#mitarbeiterNr").val();
@@ -234,7 +266,6 @@
                         success: function (result) {
                             if (result.success) {
                                 $("#mitarbeiterInfo").html(`<strong>${result.vorname} ${result.name}</strong>`);
-
                                 // Load the employee's last activities
                                 $.ajax({
                                     url: '@Url.Action("GetMitarbeiterAktivitaeten", "Zeiterfassung")',
@@ -244,7 +275,6 @@
                                         $("#mitarbeiterAktivitaeten").html(result);
                                     }
                                 });
-
                                 // Authenticate by setting a cookie
                                 $.ajax({
                                     url: '@Url.Action("VerifyMitarbeiter", "Zeiterfassung")',
@@ -253,6 +283,8 @@
                                     success: function (authResult) {
                                         if (authResult.success) {
                                             console.log('Employee authenticated.');
+                                            // Reload the page to show the employee's tasks
+                                            location.reload();
                                         }
                                     }
                                 });
@@ -263,7 +295,6 @@
                     });
                 }
             });
-
             // Load activities for the selected project
             $("#projektDropdown").change(function () {
                 const projektNr = $(this).val();
@@ -280,14 +311,12 @@
                     $("#aktivitaetenListe").html('<p class="text-muted">Please select a project to display the last activities.</p>');
                 }
             });
-
             // Form submission
             $("#zeiterfassungForm").submit(function () {
                 if (timerRunning) {
                     stopTimer();
                 }
             });
-
             // If an employee is already selected, load their activities
             if ($("#mitarbeiterInfo").text().trim() !== "") {
                 const mitarbeiterNr = $("#mitarbeiterNr").val();

@@ -36,12 +36,14 @@
                                 <td>@item.InkludierteStunden</td>
                                 <td>@item.NachberechneteMinuten</td>
                                 <td>
-                                    <a asp-action="Edit" asp-route-id="@item.Projektnummer" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil"></i> Edit
-                                    </a>
-                                    <a asp-action="Delete" asp-route-id="@item.Projektnummer" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </a>
+                                    <div class="btn-group">
+                                        <a asp-action="Edit" asp-route-id="@item.Projektnummer" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Projektnummer" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         }

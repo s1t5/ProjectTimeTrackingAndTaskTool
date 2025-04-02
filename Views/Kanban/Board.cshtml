@@ -8,7 +8,11 @@
         { 2, ("High", "text-warning") },
         { 3, ("Critical", "text-danger") }
     };
+    
+    // Set a different layout for the Board view to use full width
+    Layout = "_FullWidthLayout";
 }
+
 <div class="d-flex justify-content-between mb-3 align-items-center">
     <h1>@Model.ProjektName</h1>
     <div>
@@ -19,10 +23,11 @@
             <i class="bi bi-gear"></i> Manage Buckets
         </a>
         <a asp-action="Index" class="btn btn-outline-primary">
-            <i class="bi bi1-arrow-left"></i> Back
+            <i class="bi1-arrow-left"></i> Back
         </a>
     </div>
 </div>
+
 @if (!string.IsNullOrEmpty(TempData["ErrorMessage"] as string))
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -30,6 +35,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
+
 <!-- NEW: Show my tasks if available -->
 @if (Model.MeineAufgaben != null && Model.MeineAufgaben.Any())
 {
@@ -102,6 +108,7 @@
         </div>
     </div>
 }
+
 <div class="kanban-container">
     @if (Model.Buckets == null || !Model.Buckets.Any())
     {
@@ -191,25 +198,35 @@
         </div>
     }
 </div>
+
 <div id="errorContainer" style="display:none;" class="alert alert-danger alert-dismissible fade show fixed-top mx-auto mt-3" style="max-width:500px; z-index:9999;">
     <span id="errorMessage"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
+
 @section Styles {
     <style>
+        body {
+            overflow-x: auto;
+        }
+
         .kanban-container {
             overflow-x: auto;
             padding-bottom: 1rem;
+            width: 100%;
         }
 
         .kanban-board {
             display: flex;
             min-height: 70vh;
             gap: 1rem;
+            width: 100%;
         }
 
         .kanban-column {
-            flex: 0 0 300px;
+            flex: 1;
+            min-width: 280px;
+            max-width: 350px;
             display: flex;
             flex-direction: column;
             background-color: #f8f9fa;
@@ -233,6 +250,7 @@
             padding: 10px;
             min-height: 200px;
             overflow-y: auto;
+            max-height: calc(100vh - 300px);
         }
 
         .kanban-column-footer {
@@ -272,11 +290,11 @@
             padding: 10px;
         }
 
-            .kanban-card-body p {
-                margin-bottom: 0;
-                font-size: 0.9rem;
-                word-break: break-word;
-            }
+        .kanban-card-body p {
+            margin-bottom: 0;
+            font-size: 0.9rem;
+            word-break: break-word;
+        }
 
         .kanban-card-footer {
             padding: 10px;
@@ -300,8 +318,21 @@
         .drag-over {
             border: 2px dashed #007bff;
         }
+
+        /* Full width container overrides */
+        .container-full {
+            width: 100% !important;
+            max-width: none !important;
+            padding: 0 20px;
+        }
+
+        /* Responsive design */
+        .kanban-column {
+            min-width: 250px;
+        }
     </style>
 }
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
     <script>
@@ -309,7 +340,6 @@
             const columns = document.querySelectorAll('.kanban-column-body');
             const errorContainer = document.getElementById('errorContainer');
             const errorMessage = document.getElementById('errorMessage');
-
             // Helper function to show errors
             function showError(message) {
                 errorMessage.textContent = message;
@@ -319,7 +349,6 @@
                     errorContainer.style.display = 'none';
                 }, 5000);
             }
-
             columns.forEach(column => {
                 new Sortable(column, {
                     group: 'kanban',
@@ -331,12 +360,9 @@
                             const cardId = parseInt(evt.item.dataset.cardId);
                             const newBucketId = parseInt(evt.to.id.split('-')[1]);
                             const newPosition = Array.from(evt.to.children).indexOf(evt.item) + 1;
-
                             // Update data attributes
                             evt.item.dataset.position = newPosition;
-
                             const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
                             // Send AJAX request to update card position
                             fetch('@Url.Action("MoveCard", "Kanban")', {
                                 method: 'POST',
