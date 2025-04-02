@@ -30,10 +30,10 @@
 
 <div style="display: flex; gap: 10px; justify-content: space-between;">
   <div style="flex: 1;">
-    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/1.png?raw=true" style="width:100%">
+    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/2.png?raw=true" style="width:100%">
   </div>
   <div style="flex: 1;">
-    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/2.png?raw=true" style="width:100%">
+    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/1.png?raw=true" style="width:100%">
   </div>
   <div style="flex: 1;">
     <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/3.png?raw=true" style="width:100%">
