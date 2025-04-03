@@ -36,11 +36,12 @@
     </div>
 }
 
+
 <!-- NEW: Show my tasks if available -->
 @if (Model.MeineAufgaben != null && Model.MeineAufgaben.Any())
 {
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="mb-0">My Upcoming Tasks</h4>
             <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#myTasksCollapse" aria-expanded="true" aria-controls="myTasksCollapse">
                 <i class="bi bi-arrows-collapse"></i>

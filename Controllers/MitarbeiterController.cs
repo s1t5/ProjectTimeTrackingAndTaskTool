@@ -38,36 +38,6 @@ namespace ProjektZeiterfassung.Controllers
             }
         }
 
-        // GET: Mitarbeiter/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-            try
-            {
-                var mitarbeiter = await _context.Mitarbeiter
-                    .Where(m => m.MitarbeiterNr == id)
-                    .Select(m => new MitarbeiterViewModel
-                    {
-                        MitarbeiterNr = m.MitarbeiterNr,
-                        Name = m.Name,
-                        Vorname = m.Vorname
-                    })
-                    .FirstOrDefaultAsync();
-                if (mitarbeiter == null)
-                {
-                    return NotFound();
-                }
-                return View(mitarbeiter);
-            }
-            catch (Exception ex)
-            {
-                return NotFound($"Error retrieving employee: {ex.Message}");
-            }
-        }
-
         // GET: Mitarbeiter/Create
         public IActionResult Create()
         {

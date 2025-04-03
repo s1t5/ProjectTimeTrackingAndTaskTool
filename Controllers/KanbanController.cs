@@ -131,7 +131,7 @@ namespace ProjektZeiterfassung.Controllers
                         .Include(c => c.Bucket)
                         .Where(c => c.ZugewiesenAn == mitarbeiterNr && !c.Erledigt && c.FaelligAm.HasValue)
                         .OrderBy(c => c.FaelligAm)
-                        .Take(10)
+                        .Take(5)
                         .ToListAsync();
 
                     if (nextDueTasks.Any())

@@ -4,6 +4,7 @@
 }
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,19 +14,22 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
+
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Zeiterfassung" asp-action="Index">Project Management</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand" asp-area="" asp-controller="Zeiterfassung" asp-action="Index">Project
+                    Management</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Zeiterfassung" asp-action="Index">Time Tracking</a>
+                            <a class="nav-link" asp-area="" asp-controller="Zeiterfassung" asp-action="Index">Time
+                                Tracking</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-controller="Kanban" asp-action="Index">Project Tasks</a>
@@ -40,7 +44,8 @@
                             <a class="nav-link" asp-area="" asp-controller="Kunde" asp-action="Index">Customers</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Mitarbeiter" asp-action="Index">Employees</a>
+                            <a class="nav-link" asp-area="" asp-controller="Mitarbeiter"
+                                asp-action="Index">Employees</a>
                         </li>
                     </ul>
                     <button id="theme-toggle" class="btn-theme-toggle">
@@ -56,8 +61,10 @@
         </main>
     </div>
     <footer class="border-top footer text-muted">
+        <!-- Hier bleibt "container" statt "container-full" für den Footer -->
         <div class="container">
-            &copy; @DateTime.Now.Year - s1t5 | <a href="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool" target="_blank">GitHub Project</a>
+            @DateTime.Now.Year - s1t5 | <a href="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool"
+                target="_blank">GitHub Project</a>
         </div>
     </footer>
     <!-- Anti-Forgery Token für AJAX -->
@@ -69,4 +76,5 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>
