@@ -71,6 +71,23 @@ BEGIN
 END
 GO
 
+-- TProjekte mit BoardGUID-Feld aktualisieren
+IF NOT EXISTS (
+    SELECT * FROM sys.columns 
+    WHERE object_id = OBJECT_ID('dbo.TProjekte') AND name = 'BoardGUID'
+)
+BEGIN
+    ALTER TABLE [dbo].[TProjekte]
+    ADD [BoardGUID] [nvarchar](36) NULL DEFAULT NEWID();
+END
+GO
+
+-- Update existing records with a GUID if they don't have one
+UPDATE [dbo].[TProjekte]
+SET [BoardGUID] = NEWID()
+WHERE [BoardGUID] IS NULL;
+GO
+
 -- TTickets
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TTickets')
 BEGIN

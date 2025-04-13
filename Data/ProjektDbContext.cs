@@ -39,6 +39,11 @@ namespace ProjektZeiterfassung.Data
                 .HasColumnType("text")
                 .IsRequired(false);
             modelBuilder.Entity<Projekt>()
+                .Property(p => p.BoardGUID)
+                .HasMaxLength(36)
+                .IsRequired(false)
+                .HasDefaultValueSql("NEWID()"); // SQL Server will generate the GUID
+            modelBuilder.Entity<Projekt>()
                 .HasOne(p => p.Kunde)
                 .WithMany()
                 .HasForeignKey(p => p.Kundennummer);

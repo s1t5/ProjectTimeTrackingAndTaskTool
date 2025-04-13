@@ -20,6 +20,7 @@
 - Drag & Drop cards  
 - Deadline and priority management 
 - Task assignment 
+- Filter tasks
 
 ### 📊 Reporting  
 - Time period filtered overviews  
@@ -76,7 +77,7 @@ docker compose up
 ```
 
 6. Access the application:  
-- Web Interface: http://localhost:80  
+- Web Interface: http://localhost:80 and login with default user 1 in the time tracking page 
 
 
 ## 🐳 Docker Deployment  

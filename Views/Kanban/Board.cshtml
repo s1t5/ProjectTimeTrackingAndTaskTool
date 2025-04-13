@@ -8,7 +8,6 @@
         { 2, ("High", "text-warning") },
         { 3, ("Critical", "text-danger") }
     };
-    
     // Set a different layout for the Board view to use full width
     Layout = "_FullWidthLayout";
 }
@@ -23,8 +22,11 @@
             <i class="bi bi-gear"></i> Manage Buckets
         </a>
         <a asp-action="Index" class="btn btn-outline-primary">
-            <i class="bi1-arrow-left"></i> Back
+            <i class="bi bi-arrow-left"></i> Back
         </a>
+        <button id="refreshButton" class="btn btn-outline-info" onclick="refreshBoard()">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
     </div>
 </div>
 
@@ -36,79 +38,59 @@
     </div>
 }
 
-
-<!-- NEW: Show my tasks if available -->
-@if (Model.MeineAufgaben != null && Model.MeineAufgaben.Any())
-{
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">My Upcoming Tasks</h4>
-            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#myTasksCollapse" aria-expanded="true" aria-controls="myTasksCollapse">
-                <i class="bi bi-arrows-collapse"></i>
-            </button>
-        </div>
-        <div class="collapse show" id="myTasksCollapse">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Due</th>
-                                <th>Project</th>
-                                <th>Status</th>
-                                <th>Title</th>
-                                <th>Priority</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var task in Model.MeineAufgaben)
+<!-- Filter section -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Filter Tasks</h4>
+        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+            <i class="bi bi-funnel"></i> Toggle Filters
+        </button>
+    </div>
+    <div class="collapse @(Model.FilterAssignedTo.HasValue || Model.FilterDueDate.HasValue ? "show" : "")" id="filterCollapse">
+        <div class="card-body">
+            <form id="filterForm" method="get" class="row g-3">
+                <input type="hidden" name="id" value="@Model.ProjektID" />
+                
+                <div class="col-md-5">
+                    <label for="assigned" class="form-label">Assigned To</label>
+                    <select id="assigned" name="assigned" class="form-select">
+                        <option value="">All Employees</option>
+                        @if (Model.Mitarbeiter != null)
+                        {
+                            foreach (var mitarbeiter in Model.Mitarbeiter)
                             {
-                                var dueClass = "";
-                                if (task.FaelligAm.HasValue)
+                                if (Model.FilterAssignedTo == mitarbeiter.MitarbeiterNr)
                                 {
-                                    var daysLeft = (task.FaelligAm.Value - DateTime.Today).Days;
-                                    dueClass = daysLeft < 0 ? "table-danger" :
-                                    daysLeft <= 2 ? "table-warning" : "";
+                                    <option value="@mitarbeiter.MitarbeiterNr" selected>
+                                        @mitarbeiter.Vorname @mitarbeiter.Name
+                                    </option>
                                 }
-                                <tr class="@dueClass">
-                                    <td>@(task.FaelligAm?.ToString("MM/dd/yyyy") ?? "-")</td>
-                                    <td>
-                                        @if (task.ProjektID != Model.ProjektID)
-                                        {
-                                            <a asp-action="Board" asp-route-id="@task.ProjektID">
-                                                @task.Projekt?.Projektbezeichnung
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            @task.Projekt?.Projektbezeichnung
-                                        }
-                                    </td>
-                                    <td>@task.Bucket?.Name</td>
-                                    <td>@task.Titel</td>
-                                    <td>
-                                        @if (priorities.ContainsKey(task.Prioritaet))
-                                        {
-                                            <span class="@priorities[task.Prioritaet].color">
-                                                @priorities[task.Prioritaet].name
-                                            </span>
-                                        }
-                                    </td>
-                                    <td>
-                                        <a asp-action="EditCard" asp-route-id="@task.CardID" class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    </td>
-                                </tr>
+                                else
+                                {
+                                    <option value="@mitarbeiter.MitarbeiterNr">
+                                        @mitarbeiter.Vorname @mitarbeiter.Name
+                                    </option>
+                                }
                             }
-                        </tbody>
-                    </table>
+                        }
+                    </select>
                 </div>
-            </div>
+                
+                <div class="col-md-5">
+                    <label for="due" class="form-label">Due Date</label>
+                    <input type="date" id="due" name="due" class="form-control" value="@(Model.FilterDueDate?.ToString("yyyy-MM-dd"))" />
+                </div>
+                
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="d-grid gap-2 w-100">
+                        <button type="submit" class="btn btn-primary">Apply</button>
+                        <a href="@Url.Action("Board", new { id = Model.ProjektID })" class="btn btn-outline-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-}
+</div>
 
 <div class="kanban-container">
     @if (Model.Buckets == null || !Model.Buckets.Any())
@@ -210,20 +192,17 @@
         body {
             overflow-x: auto;
         }
-
         .kanban-container {
             overflow-x: auto;
             padding-bottom: 1rem;
             width: 100%;
         }
-
         .kanban-board {
             display: flex;
             min-height: 70vh;
             gap: 1rem;
             width: 100%;
         }
-
         .kanban-column {
             flex: 1;
             min-width: 280px;
@@ -234,7 +213,6 @@
             border-radius: 4px;
             border: 1px solid #ddd;
         }
-
         .kanban-column-header {
             padding: 10px;
             font-weight: bold;
@@ -245,7 +223,6 @@
             border-radius: 4px 4px 0 0;
             color: white;
         }
-
         .kanban-column-body {
             flex: 1;
             padding: 10px;
@@ -253,12 +230,10 @@
             overflow-y: auto;
             max-height: calc(100vh - 300px);
         }
-
         .kanban-column-footer {
             padding: 10px;
             border-top: 1px solid #ddd;
         }
-
         .kanban-card {
             background-color: white;
             border: 1px solid #ddd;
@@ -267,7 +242,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             cursor: move;
         }
-
         .kanban-card-header {
             padding: 10px;
             border-bottom: 1px solid #ddd;
@@ -275,28 +249,23 @@
             justify-content: space-between;
             align-items: flex-start;
         }
-
         .kanban-card-title {
             font-size: 1rem;
             margin: 0;
             word-break: break-word;
         }
-
         .kanban-card-actions {
             display: flex;
             gap: 5px;
         }
-
         .kanban-card-body {
             padding: 10px;
         }
-
         .kanban-card-body p {
             margin-bottom: 0;
             font-size: 0.9rem;
             word-break: break-word;
         }
-
         .kanban-card-footer {
             padding: 10px;
             border-top: 1px solid #eee;
@@ -305,31 +274,34 @@
             gap: 8px;
             font-size: 0.8rem;
         }
-
         .kanban-card-assignee, .kanban-card-priority, .kanban-card-due-date {
             display: flex;
             align-items: center;
             gap: 4px;
         }
-
         .dragging {
             opacity: 0.5;
         }
-
         .drag-over {
             border: 2px dashed #007bff;
         }
-
         /* Full width container overrides */
         .container-full {
             width: 100% !important;
             max-width: none !important;
             padding: 0 20px;
         }
-
         /* Responsive design */
         .kanban-column {
             min-width: 250px;
+        }
+        
+        #refreshButton {
+            transition: transform 0.5s;
+        }
+        
+        #refreshButton.refreshing {
+            transform: rotate(360deg);
         }
     </style>
 }
@@ -341,6 +313,7 @@
             const columns = document.querySelectorAll('.kanban-column-body');
             const errorContainer = document.getElementById('errorContainer');
             const errorMessage = document.getElementById('errorMessage');
+            
             // Helper function to show errors
             function showError(message) {
                 errorMessage.textContent = message;
@@ -350,6 +323,7 @@
                     errorContainer.style.display = 'none';
                 }, 5000);
             }
+            
             columns.forEach(column => {
                 new Sortable(column, {
                     group: 'kanban',
@@ -361,9 +335,11 @@
                             const cardId = parseInt(evt.item.dataset.cardId);
                             const newBucketId = parseInt(evt.to.id.split('-')[1]);
                             const newPosition = Array.from(evt.to.children).indexOf(evt.item) + 1;
+                            
                             // Update data attributes
                             evt.item.dataset.position = newPosition;
                             const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                            
                             // Send AJAX request to update card position
                             fetch('@Url.Action("MoveCard", "Kanban")', {
                                 method: 'POST',
@@ -404,6 +380,161 @@
                     }
                 });
             });
+            
+            // Function to refresh the board data
+            window.refreshBoard = function() {
+                const refreshButton = document.getElementById('refreshButton');
+                refreshButton.classList.add('refreshing');
+                refreshButton.disabled = true;
+                
+                // Get filter values
+                const assignedFilter = document.getElementById('assigned')?.value;
+                const dueFilter = document.getElementById('due')?.value;
+                
+                // Prepare parameters for the fetch request
+                const params = new URLSearchParams();
+                params.append('projektId', @Model.ProjektID);
+                if (assignedFilter) params.append('assignedTo', assignedFilter);
+                if (dueFilter) params.append('dueDate', dueFilter);
+                
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                
+                fetch('@Url.Action("RefreshCards", "Kanban")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': csrfToken
+                    },
+                    body: params
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Clear all bucket contents
+                        columns.forEach(column => {
+                            const bucketId = parseInt(column.id.split('-')[1]);
+                            column.innerHTML = '';
+                            
+                            // Add cards if this bucket has any
+                            if (data.cards[bucketId]) {
+                                data.cards[bucketId].forEach(card => {
+                                    renderCard(column, card);
+                                });
+                            }
+                        });
+                    } else {
+                        showError(data.message || 'Error refreshing data');
+                    }
+                })
+                .catch(error => {
+                    showError(`Error refreshing data: ${error.message}`);
+                })
+                .finally(() => {
+                    refreshButton.classList.remove('refreshing');
+                    refreshButton.disabled = false;
+                });
+            };
+            
+            // Helper function to render a card
+            function renderCard(column, card) {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'kanban-card';
+                cardDiv.dataset.cardId = card.cardID;
+                cardDiv.dataset.position = card.position;
+                
+                // Create header
+                const header = document.createElement('div');
+                header.className = 'kanban-card-header';
+                
+                const title = document.createElement('h5');
+                title.className = 'kanban-card-title';
+                title.textContent = card.titel;
+                
+                const actions = document.createElement('div');
+                actions.className = 'kanban-card-actions';
+                actions.innerHTML = `
+                    <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="@Url.Content("~/Kanban/DeleteCard/")${card.cardID}" class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('Are you sure you want to delete this card?');">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                `;
+                
+                header.appendChild(title);
+                header.appendChild(actions);
+                cardDiv.appendChild(header);
+                
+                // Create body if there's a description
+                if (card.beschreibung) {
+                    const body = document.createElement('div');
+                    body.className = 'kanban-card-body';
+                    
+                    const desc = document.createElement('p');
+                    desc.textContent = card.beschreibung;
+                    
+                    body.appendChild(desc);
+                    cardDiv.appendChild(body);
+                }
+                
+                // Create footer with assignee, priority, and due date
+                const footer = document.createElement('div');
+                footer.className = 'kanban-card-footer';
+                
+                // Add assignee if available
+                if (card.zugewiesenAnMitarbeiter) {
+                    const assignee = document.createElement('div');
+                    assignee.className = 'kanban-card-assignee';
+                    assignee.innerHTML = `
+                        <i class="bi bi-person-fill"></i>
+                        ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
+                    `;
+                    footer.appendChild(assignee);
+                }
+                
+                // Add priority if available
+                const priorities = {
+                    0: { name: 'Low', color: 'text-muted' },
+                    1: { name: 'Normal', color: 'text-primary' },
+                    2: { name: 'High', color: 'text-warning' },
+                    3: { name: 'Critical', color: 'text-danger' }
+                };
+                
+                if (card.prioritaet > 0 && priorities[card.prioritaet]) {
+                    const priority = document.createElement('div');
+                    priority.className = `kanban-card-priority ${priorities[card.prioritaet].color}`;
+                    priority.innerHTML = `
+                        <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
+                    `;
+                    footer.appendChild(priority);
+                }
+                
+                // Add due date if available
+                if (card.faelligAm) {
+                    const dueDate = new Date(card.faelligAm);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    const daysLeft = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+                    const dateClass = daysLeft < 0 ? 'text-danger' : (daysLeft <= 2 ? 'text-warning' : 'text-info');
+                    
+                    const due = document.createElement('div');
+                    due.className = `kanban-card-due-date ${dateClass}`;
+                    due.innerHTML = `
+                        <i class="bi bi-calendar"></i> ${dueDate.toLocaleDateString()}
+                    `;
+                    footer.appendChild(due);
+                }
+                
+                cardDiv.appendChild(footer);
+                column.appendChild(cardDiv);
+            }
         });
     </script>
 }

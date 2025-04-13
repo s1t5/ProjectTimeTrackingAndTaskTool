@@ -8,6 +8,7 @@ namespace ProjektZeiterfassung.Models
         public int Kundennummer { get; set; }
         public int? InkludierteStunden { get; set; }
         public int? NachberechneteMinuten { get; set; }
+        public string? BoardGUID { get; set; }
         public Kunde? Kunde { get; set; }
     }
 }

@@ -7,7 +7,7 @@
 }
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-12">
         <div class="card">
             <div class="card-header">
                 <h2>Kanban Boards</h2>
@@ -20,6 +20,7 @@
                                 <th data-sort="number">Project Number</th>
                                 <th data-sort="string">Project Name</th>
                                 <th data-sort="string">Customer</th>
+                                <th data-sort="string">Board ID</th>
                                 <th data-sort="number">Tasks</th>
                                 <th>Actions</th>
                             </tr>
@@ -28,7 +29,7 @@
                             @if (Model == null || !Model.Any())
                             {
                                 <tr>
-                                    <td colspan="5" class="text-center">No projects found.</td>
+                                    <td colspan="6" class="text-center">No projects found.</td>
                                 </tr>
                             }
                             else
@@ -36,15 +37,15 @@
                                 foreach (var projekt in Model)
                                 {
                                     // Get task count from ViewBag if it exists
-                                    int taskCount = ViewBag.ProjektTaskCounts != null && 
-                                                   ViewBag.ProjektTaskCounts.ContainsKey(projekt.Projektnummer) 
-                                                   ? ViewBag.ProjektTaskCounts[projekt.Projektnummer] 
+                                    int taskCount = ViewBag.ProjektTaskCounts != null &&
+                                                   ViewBag.ProjektTaskCounts.ContainsKey(projekt.Projektnummer)
+                                                   ? ViewBag.ProjektTaskCounts[projekt.Projektnummer]
                                                    : 0;
-                                    
                                     <tr>
                                         <td>@projekt.Projektnummer</td>
                                         <td>@projekt.Projektbezeichnung</td>
                                         <td>@projekt.Kunde?.Kundenname</td>
+                                        <td>@(projekt.BoardGUID ?? "Not generated")</td>
                                         <td>@taskCount</td>
                                         <td>
                                             <div class="btn-group d-flex" role="group">
@@ -65,67 +66,6 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h3>My Upcoming Tasks</h3>
-            </div>
-            <div class="card-body">
-                @if (mitarbeiterNr.HasValue && assignedTasks != null && assignedTasks.Any())
-                {
-                    <div class="list-group">
-                        @foreach (var task in assignedTasks)
-                        {
-                            var dueClass = "";
-                            if (task.FaelligAm.HasValue)
-                            {
-                                var daysLeft = (task.FaelligAm.Value - DateTime.Today).Days;
-                                dueClass = daysLeft < 0 ? "list-group-item-danger" :
-                                daysLeft <= 2 ? "list-group-item-warning" : "";
-                            }
-                            <a href="@Url.Action("Board", new { id = task.ProjektID })"
-                               class="list-group-item list-group-item-action @dueClass">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">@task.Titel</h5>
-                                    @if (task.FaelligAm.HasValue)
-                                    {
-                                        <small>@task.FaelligAm.Value.ToString("MM/dd/yyyy")</small>
-                                    }
-                                </div>
-                                <p class="mb-1">
-                                    @if (!string.IsNullOrEmpty(task.Beschreibung) && task.Beschreibung.Length > 60)
-                                    {
-                                        @(task.Beschreibung.Substring(0, 60) + "...")
-                                    }
-                                    else
-                                    {
-                                        @task.Beschreibung
-                                    }
-                                </p>
-                                <small>@task.Projekt?.Projektbezeichnung - @task.Bucket?.Name</small>
-                            </a>
-                        }
-                    </div>
-                }
-                else if (mitarbeiterNr.HasValue)
-                {
-                    <p class="text-muted">No upcoming tasks found.</p>
-                }
-                else
-                {
-                    <div class="alert alert-info">
-                        <p>
-                            To view your tasks, please log in first.
-                            Enter your employee number in the time tracking system.
-                        </p>
-                        <a asp-controller="Zeiterfassung" asp-action="Index" class="btn btn-primary">
-                            <i class="bi bi-clock"></i> Go to Time Tracking
-                        </a>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="mt-3">
@@ -142,41 +82,33 @@
                 $(this).css('cursor', 'pointer');
                 $(this).append(' <i class="bi bi-arrow-down-up text-muted"></i>');
             });
-
             $("#projectsTable th[data-sort]").click(function() {
                 var table = $(this).parents('table').eq(0);
                 var rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()));
                 var dir = $(this).hasClass('asc') ? 'desc' : 'asc';
-                
                 // Update sorting indicators
                 table.find('th').removeClass('asc desc');
                 $(this).addClass(dir);
                 table.find('th i').removeClass('bi-arrow-down bi-arrow-up').addClass('bi-arrow-down-up text-muted');
-                
                 // Update icon based on direction
                 if (dir === 'asc') {
                     $(this).find('i').removeClass('bi-arrow-down-up text-muted').addClass('bi-arrow-up');
                 } else {
                     $(this).find('i').removeClass('bi-arrow-down-up text-muted').addClass('bi-arrow-down');
                 }
-                
                 // If direction is desc, reverse the array
                 if (dir === 'desc') rows = rows.reverse();
-                
                 // Reattach rows to table
                 for (var i = 0; i < rows.length; i++) {
                     table.append(rows[i]);
                 }
             });
-
             // Comparison function for sorting
             function comparer(index) {
                 var sortType = $("#projectsTable th").eq(index).data('sort');
-                
                 return function(a, b) {
                     var valA = getCellValue(a, index);
                     var valB = getCellValue(b, index);
-                    
                     if (sortType === 'number') {
                         return parseFloat(valA) - parseFloat(valB);
                     } else {
@@ -184,7 +116,6 @@
                     }
                 };
             }
-
             // Helper function to get cell value
             function getCellValue(row, index) {
                 return $(row).children('td').eq(index).text();
