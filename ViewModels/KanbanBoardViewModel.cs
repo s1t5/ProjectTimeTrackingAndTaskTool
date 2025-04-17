@@ -34,5 +34,8 @@ namespace ProjektZeiterfassung.ViewModels
         [Display(Name = "Filter Due Date")]
         [DataType(DataType.Date)]
         public DateTime? FilterDueDate { get; set; }
+
+        [Display(Name = "Show Archived Cards")]
+        public bool ShowArchivedCards { get; set; }
     }
 }

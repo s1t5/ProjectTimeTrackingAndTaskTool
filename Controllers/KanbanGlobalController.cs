@@ -16,7 +16,8 @@ namespace ProjektZeiterfassung.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> GlobalBoard()
+        // Update der GlobalBoard-Methode
+        public async Task<IActionResult> GlobalBoard(bool showArchived = false)
         {
             try
             {
@@ -33,11 +34,21 @@ namespace ProjektZeiterfassung.Controllers
                     .OrderBy(b => b.Reihenfolge)
                     .ToList();
 
-                // Get all cards for all projects
-                var karten = await _context.KanbanCards
+                // Build base query for all cards
+                var baseQuery = _context.KanbanCards
                     .Include(c => c.Bucket)
                     .Include(c => c.Projekt)
                     .Include(c => c.ZugewiesenAnMitarbeiter)
+                    .AsQueryable(); // Wichtig: AsQueryable() klarstellen
+
+                // Apply archive filter if needed
+                if (!showArchived)
+                {
+                    baseQuery = baseQuery.Where(c => !c.Erledigt);
+                }
+
+                // Execute the final query
+                var karten = await baseQuery
                     .OrderBy(c => c.Position)
                     .ToListAsync();
 
@@ -55,7 +66,8 @@ namespace ProjektZeiterfassung.Controllers
                     Buckets = uniqueBuckets,
                     Karten = karten,
                     Mitarbeiter = mitarbeiter,
-                    MeineAufgaben = new List<KanbanCard>()
+                    MeineAufgaben = new List<KanbanCard>(),
+                    ShowArchivedCards = showArchived
                 };
 
                 // Try to read employee number from cookie
@@ -111,7 +123,7 @@ namespace ProjektZeiterfassung.Controllers
 
         // Refresh cards via AJAX
         [HttpPost]
-        public async Task<IActionResult> RefreshGlobalCards(int? assignedTo = null, DateTime? dueDate = null)
+        public async Task<IActionResult> RefreshGlobalCards(bool showArchived = false, int? assignedTo = null, DateTime? dueDate = null)
         {
             try
             {
@@ -119,20 +131,23 @@ namespace ProjektZeiterfassung.Controllers
                 var dtoCards = new Dictionary<string, List<CardDTO>>();
 
                 // Start with a base query
-                IQueryable<KanbanCard> baseQuery = _context.KanbanCards;
-
-                // Include related entities
-                baseQuery = baseQuery
+                var baseQuery = _context.KanbanCards
                     .Include(c => c.Bucket)
                     .Include(c => c.Projekt)
-                    .Include(c => c.ZugewiesenAnMitarbeiter);
+                    .Include(c => c.ZugewiesenAnMitarbeiter)
+                    .AsQueryable();
 
-                // Apply filters
+                // Apply archive filter
+                if (!showArchived)
+                {
+                    baseQuery = baseQuery.Where(c => !c.Erledigt);
+                }
+
+                // Apply other filters...
                 if (assignedTo.HasValue)
                 {
                     baseQuery = baseQuery.Where(c => c.ZugewiesenAn == assignedTo.Value);
                 }
-
                 if (dueDate.HasValue)
                 {
                     baseQuery = baseQuery.Where(c =>
@@ -172,6 +187,7 @@ namespace ProjektZeiterfassung.Controllers
                         Prioritaet = card.Prioritaet,
                         FaelligAm = card.FaelligAm,
                         ProjektName = card.Projekt?.Projektbezeichnung ?? "",
+                        Erledigt = card.Erledigt,
                         ZugewiesenAnMitarbeiter = card.ZugewiesenAnMitarbeiter != null ?
                             new MitarbeiterDTO
                             {

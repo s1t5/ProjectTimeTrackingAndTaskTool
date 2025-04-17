@@ -72,13 +72,12 @@ namespace ProjektZeiterfassung.Controllers
         }
 
         // Adjust Board method
-        public async Task<IActionResult> Board(int id)
+        public async Task<IActionResult> Board(int id, bool showArchived = false)
         {
             try
             {
                 var projekt = await _context.Projekte
                     .FirstOrDefaultAsync(p => p.Projektnummer == id);
-
                 if (projekt == null)
                 {
                     return NotFound();
@@ -97,11 +96,19 @@ namespace ProjektZeiterfassung.Controllers
                     .OrderBy(b => b.Reihenfolge)
                     .ToList();
 
-                // Get all cards for the project
-                var karten = await _context.KanbanCards
+                // Get all cards for the project, filter by archive status if required
+                var kartenQuery = _context.KanbanCards
                     .Include(c => c.Bucket)
                     .Include(c => c.ZugewiesenAnMitarbeiter)
-                    .Where(c => c.ProjektID == id)
+                    .Where(c => c.ProjektID == id);
+
+                // Only show non-archived cards by default
+                if (!showArchived)
+                {
+                    kartenQuery = kartenQuery.Where(c => !c.Erledigt);
+                }
+
+                var karten = await kartenQuery
                     .OrderBy(c => c.Position)
                     .ToListAsync();
 
@@ -119,7 +126,8 @@ namespace ProjektZeiterfassung.Controllers
                     Buckets = finalBuckets,
                     Karten = karten,
                     Mitarbeiter = mitarbeiter,
-                    MeineAufgaben = new List<KanbanCard>()  // Initialization to avoid null reference
+                    MeineAufgaben = new List<KanbanCard>(),  // Initialization to avoid null reference
+                    ShowArchivedCards = showArchived
                 };
 
                 // Read employee number and get current filter settings from query string
@@ -176,9 +184,8 @@ namespace ProjektZeiterfassung.Controllers
             }
         }
 
-        // Refresh cards via AJAX
         [HttpPost]
-        public async Task<IActionResult> RefreshCards(int projektId, int? assignedTo = null, DateTime? dueDate = null)
+        public async Task<IActionResult> RefreshCards(int projektId, bool showArchived = false, int? assignedTo = null, DateTime? dueDate = null)
         {
             try
             {
@@ -186,25 +193,31 @@ namespace ProjektZeiterfassung.Controllers
                 var dtoCards = new Dictionary<int, List<CardDTO>>();
 
                 // Build query for cards
-                var query = _context.KanbanCards
+                var baseQuery = _context.KanbanCards
                     .Include(c => c.Bucket)
                     .Include(c => c.ZugewiesenAnMitarbeiter)
-                    .Where(c => c.ProjektID == projektId);
+                    .Where(c => c.ProjektID == projektId)
+                    .AsQueryable();
 
-                // Apply filters
-                if (assignedTo.HasValue)
+                // Apply archive filter if needed - only if showArchived is false
+                if (!showArchived)
                 {
-                    query = query.Where(c => c.ZugewiesenAn == assignedTo.Value);
+                    baseQuery = baseQuery.Where(c => !c.Erledigt);
                 }
 
+                // Apply other filters
+                if (assignedTo.HasValue)
+                {
+                    baseQuery = baseQuery.Where(c => c.ZugewiesenAn == assignedTo.Value);
+                }
                 if (dueDate.HasValue)
                 {
-                    query = query.Where(c =>
+                    baseQuery = baseQuery.Where(c =>
                         c.FaelligAm.HasValue && c.FaelligAm.Value.Date == dueDate.Value.Date);
                 }
 
                 // Get filtered cards and map to DTOs
-                var cards = await query.OrderBy(c => c.Position).ToListAsync();
+                var cards = await baseQuery.OrderBy(c => c.Position).ToListAsync();
 
                 // Group by bucket
                 var cardsByBucket = cards.GroupBy(c => c.BucketID);
@@ -223,6 +236,7 @@ namespace ProjektZeiterfassung.Controllers
                             Position = card.Position,
                             Prioritaet = card.Prioritaet,
                             FaelligAm = card.FaelligAm,
+                            Erledigt = card.Erledigt,
                             ZugewiesenAnMitarbeiter = card.ZugewiesenAnMitarbeiter != null ?
                                 new MitarbeiterDTO
                                 {
@@ -235,7 +249,7 @@ namespace ProjektZeiterfassung.Controllers
                     dtoCards.Add(group.Key, cardDtos);
                 }
 
-                return Json(new { success = true, cards = dtoCards });
+                return Json(new { success = true, cards = dtoCards, showArchived = showArchived });
             }
             catch (Exception ex)
             {
@@ -710,6 +724,51 @@ namespace ProjektZeiterfassung.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ArchiveCard(int id)
+        {
+            try
+            {
+                var card = await _context.KanbanCards.FindAsync(id);
+                if (card == null)
+                {
+                    return NotFound(new { success = false, message = "Card not found" });
+                }
+
+                card.Erledigt = true;
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // Karte wiederherstellen
+        [HttpPost]
+        public async Task<IActionResult> UnarchiveCard(int id)
+        {
+            try
+            {
+                var card = await _context.KanbanCards.FindAsync(id);
+                if (card == null)
+                {
+                    return NotFound(new { success = false, message = "Card not found" });
+                }
+
+                card.Erledigt = false;
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
         // Move card via drag & drop (AJAX)
         [HttpPost]
         public async Task<IActionResult> MoveCard([FromBody] KanbanCardMoveViewModel model)
@@ -734,7 +793,10 @@ namespace ProjektZeiterfassung.Controllers
                 card.Position = model.NewPosition;
 
                 var bucket = await _context.KanbanBuckets.FindAsync(model.NewBucketID);
-                if (bucket != null && bucket.Name.ToLower().Contains("erledigt"))
+                if (bucket != null &&
+                   (bucket.Name.ToLower().Contains("erledigt") ||
+                    bucket.Name.ToLower().Contains("done") ||
+                    bucket.Name.ToLower().Contains("finished")))
                 {
                     card.Erledigt = true;
                 }
@@ -846,6 +908,7 @@ namespace ProjektZeiterfassung.Controllers
         public int Prioritaet { get; set; }
         public DateTime? FaelligAm { get; set; }
         public string ProjektName { get; set; }
+        public bool Erledigt { get; set; } // Fügen Sie dieses Feld hinzu
         public MitarbeiterDTO ZugewiesenAnMitarbeiter { get; set; }
     }
 

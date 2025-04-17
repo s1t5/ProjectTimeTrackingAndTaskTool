@@ -3,11 +3,11 @@
     ViewData["Title"] = "Global Kanban Board";
     // List of default priority levels
     var priorities = new Dictionary<int, (string name, string color)> {
-        { 0, ("Low", "text-muted") },
-        { 1, ("Normal", "text-primary") },
-        { 2, ("High", "text-warning") },
-        { 3, ("Critical", "text-danger") }
-    };
+{ 0, ("Low", "text-muted") },
+{ 1, ("Normal", "text-primary") },
+{ 2, ("High", "text-warning") },
+{ 3, ("Critical", "text-danger") }
+};
     // Set a different layout for the Board view to use full width
     Layout = "_FullWidthLayout";
 }
@@ -28,11 +28,13 @@
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="mb-0">Filter Tasks</h4>
-        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+        <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse"
+            aria-expanded="false" aria-controls="filterCollapse">
             <i class="bi bi-funnel"></i> Toggle Filters
         </button>
     </div>
-    <div class="collapse @(Model.FilterAssignedTo.HasValue || Model.FilterDueDate.HasValue ? "show" : "")" id="filterCollapse">
+    <div class="collapse @(Model.FilterAssignedTo.HasValue || Model.FilterDueDate.HasValue ? "show" : "")"
+        id="filterCollapse">
         <div class="card-body">
             <form id="filterForm" method="get" class="row g-3">
                 <div class="col-md-4">
@@ -61,12 +63,14 @@
                 </div>
                 <div class="col-md-4">
                     <label for="due" class="form-label">Due Date</label>
-                    <input type="date" id="due" name="due" class="form-control" value="@(Model.FilterDueDate?.ToString("yyyy-MM-dd"))" />
+                    <input type="date" id="due" name="due" class="form-control"
+                        value="@(Model.FilterDueDate?.ToString("yyyy-MM-dd"))" />
                 </div>
                 <div class="col-md-4">
                     <label for="searchFilter" class="form-label">Search</label>
                     <div class="input-group">
-                        <input type="text" id="searchFilter" class="form-control" placeholder="Search by title or description...">
+                        <input type="text" id="searchFilter" class="form-control"
+                            placeholder="Search by title or description...">
                         <button type="button" id="searchBtn" class="btn btn-outline-secondary">
                             <i class="bi bi-search"></i>
                         </button>
@@ -108,14 +112,16 @@
                     <div class="kanban-column-body" id="bucket-@bucket.Name.Replace(" ", "_")">
                         @if (Model.Karten != null)
                         {
-                            var bucketCards = Model.Karten.Where(c => c.Bucket?.Name == bucket.Name).OrderBy(c => c.Position).ToList();
+                            var bucketCards = Model.Karten.Where(c => c.Bucket?.Name == bucket.Name).OrderBy(c =>
+                            c.Position).ToList();
                             foreach (var card in bucketCards)
                             {
                                 <div class="kanban-card" data-card-id="@card.CardID" data-position="@card.Position">
                                     <div class="kanban-card-header">
                                         <h5 class="kanban-card-title">@card.Titel</h5>
                                         <div class="kanban-card-actions">
-                                            <a asp-controller="Kanban" asp-action="EditCard" asp-route-id="@card.CardID" class="btn btn-sm btn-outline-primary">
+                                            <a asp-controller="Kanban" asp-action="EditCard" asp-route-id="@card.CardID"
+                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                         </div>
@@ -130,7 +136,8 @@
                                     <div class="kanban-card-footer">
                                         @if (card.ZugewiesenAn.HasValue)
                                         {
-                                            var mitarbeiter = Model.Mitarbeiter?.FirstOrDefault(m => m.MitarbeiterNr == card.ZugewiesenAn.Value);
+                                            var mitarbeiter = Model.Mitarbeiter?.FirstOrDefault(m => m.MitarbeiterNr ==
+                                            card.ZugewiesenAn.Value);
                                             if (mitarbeiter != null)
                                             {
                                                 <div class="kanban-card-assignee">
@@ -165,7 +172,9 @@
     }
 </div>
 
-<div id="errorContainer" style="display:none;" class="alert alert-danger alert-dismissible fade show fixed-top mx-auto mt-3" style="max-width:500px; z-index:9999;">
+<div id="errorContainer" style="display:none;"
+    class="alert alert-danger alert-dismissible fade show fixed-top mx-auto mt-3"
+    style="max-width:500px; z-index:9999;">
     <span id="errorMessage"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
@@ -175,17 +184,20 @@
         body {
             overflow-x: auto;
         }
+
         .kanban-container {
             overflow-x: auto;
             padding-bottom: 1rem;
             width: 100%;
         }
+
         .kanban-board {
             display: flex;
             min-height: 70vh;
             gap: 1rem;
             width: 100%;
         }
+
         .kanban-column {
             flex: 1;
             min-width: 280px;
@@ -196,6 +208,7 @@
             border-radius: 4px;
             border: 1px solid #ddd;
         }
+
         .kanban-column-header {
             padding: 10px;
             font-weight: bold;
@@ -206,6 +219,7 @@
             border-radius: 4px 4px 0 0;
             color: white;
         }
+
         .kanban-column-body {
             flex: 1;
             padding: 10px;
@@ -213,6 +227,7 @@
             overflow-y: auto;
             max-height: calc(100vh - 300px);
         }
+
         .kanban-card {
             background-color: white;
             border: 1px solid #ddd;
@@ -220,6 +235,7 @@
             margin-bottom: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
+
         .kanban-card-header {
             padding: 10px;
             border-bottom: 1px solid #ddd;
@@ -227,23 +243,28 @@
             justify-content: space-between;
             align-items: flex-start;
         }
+
         .kanban-card-title {
             font-size: 1rem;
             margin: 0;
             word-break: break-word;
         }
+
         .kanban-card-actions {
             display: flex;
             gap: 5px;
         }
+
         .kanban-card-body {
             padding: 10px;
         }
+
         .kanban-card-body p {
             margin-bottom: 0;
             font-size: 0.9rem;
             word-break: break-word;
         }
+
         .kanban-card-footer {
             padding: 10px;
             border-top: 1px solid #eee;
@@ -252,33 +273,43 @@
             gap: 8px;
             font-size: 0.8rem;
         }
-        .kanban-card-assignee, .kanban-card-priority, .kanban-card-due-date {
+
+        .kanban-card-assignee,
+        .kanban-card-priority,
+        .kanban-card-due-date {
             display: flex;
             align-items: center;
             gap: 4px;
         }
+
         .dragging {
             opacity: 0.5;
         }
+
         .drag-over {
             border: 2px dashed #007bff;
         }
+
         /* Full width container overrides */
         .container-full {
             width: 100% !important;
             max-width: none !important;
             padding: 0 20px;
         }
+
         /* Responsive design */
         .kanban-column {
             min-width: 250px;
         }
+
         #refreshButton {
             transition: transform 0.5s;
         }
+
         #refreshButton.refreshing {
             transform: rotate(360deg);
         }
+
         /* Hide filtered cards */
         .filtered-out {
             display: none;
@@ -293,7 +324,7 @@
             const errorMessage = document.getElementById('errorMessage');
             const searchFilter = document.getElementById('searchFilter');
             const searchBtn = document.getElementById('searchBtn');
-            
+
             // Helper function to show errors
             function showError(message) {
                 errorMessage.textContent = message;
@@ -303,12 +334,12 @@
                     errorContainer.style.display = 'none';
                 }, 5000);
             }
-            
+
             // Search functionality
             function performSearch() {
                 const searchText = searchFilter.value.toLowerCase();
                 const cards = document.querySelectorAll('.kanban-card');
-                
+
                 if (!searchText) {
                     // If search is empty, show all cards
                     cards.forEach(card => {
@@ -316,18 +347,18 @@
                     });
                     return;
                 }
-                
+
                 cards.forEach(card => {
                     const title = card.querySelector('.kanban-card-title').textContent.toLowerCase();
                     const description = card.querySelector('.kanban-card-body').textContent.toLowerCase();
-                    
+
                     if (title.includes(searchText) || description.includes(searchText)) {
                         card.classList.remove('filtered-out');
                     } else {
                         card.classList.add('filtered-out');
                     }
                 });
-                
+
                 // Update counter badges
                 const columns = document.querySelectorAll('.kanban-column');
                 columns.forEach(column => {
@@ -338,37 +369,37 @@
                     }
                 });
             }
-            
+
             if (searchBtn) {
                 searchBtn.addEventListener('click', performSearch);
             }
-            
+
             if (searchFilter) {
-                searchFilter.addEventListener('keypress', function(e) {
+                searchFilter.addEventListener('keypress', function (e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         performSearch();
                     }
                 });
             }
-            
+
             // Function to refresh the board data
-            window.refreshBoard = function() {
+            window.refreshBoard = function () {
                 const refreshButton = document.getElementById('refreshButton');
                 refreshButton.classList.add('refreshing');
                 refreshButton.disabled = true;
-                
+
                 // Get filter values
                 const assignedFilter = document.getElementById('assigned')?.value;
                 const dueFilter = document.getElementById('due')?.value;
-                
+
                 // Prepare parameters for the fetch request
                 const params = new URLSearchParams();
                 if (assignedFilter) params.append('assignedTo', assignedFilter);
                 if (dueFilter) params.append('dueDate', dueFilter);
-                
+
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                
+
                 fetch('@Url.Action("RefreshGlobalCards", "KanbanGlobal")', {
                     method: 'POST',
                     headers: {
@@ -377,51 +408,59 @@
                     },
                     body: params
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Process the cards by bucket name
-                        Object.entries(data.cards).forEach(([bucketName, cards]) => {
-                            const bucketId = bucketName.replace(/\s+/g, '_');
-                            const column = document.getElementById(`bucket-${bucketId}`);
-                            
-                            if (column) {
-                                column.innerHTML = '';
-                                cards.forEach(card => {
-                                    renderCard(column, card);
-                                });
-                            }
-                        });
-                        
-                        // If search filter is active, reapply it
-                        if (searchFilter.value) {
-                            performSearch();
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
                         }
-                    } else {
-                        showError(data.message || 'Error refreshing data');
-                    }
-                })
-                .catch(error => {
-                    showError(`Error refreshing data: ${error.message}`);
-                })
-                .finally(() => {
-                    refreshButton.classList.remove('refreshing');
-                    refreshButton.disabled = false;
-                });
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Process the cards by bucket name
+                            Object.entries(data.cards).forEach(([bucketName, cards]) => {
+                                const bucketId = bucketName.replace(/\s+/g, '_');
+                                const column = document.getElementById(`bucket-${bucketId}`);
+
+                                if (column) {
+                                    column.innerHTML = '';
+                                    cards.forEach(card => {
+                                        renderCard(column, card);
+                                    });
+                                }
+                            });
+
+                            // If search filter is active, reapply it
+                            if (searchFilter.value) {
+                                performSearch();
+                            }
+                        } else {
+                            showError(data.message || 'Error refreshing data');
+                        }
+                    })
+                    .catch(error => {
+                        showError(`Error refreshing data: ${error.message}`);
+                    })
+                    .finally(() => {
+                        refreshButton.classList.remove('refreshing');
+                        refreshButton.disabled = false;
+                    });
             };
-            
+
             // Helper function to render a card
             function renderCard(column, card) {
                 const cardDiv = document.createElement('div');
                 cardDiv.className = 'kanban-card';
                 cardDiv.dataset.cardId = card.cardID;
                 cardDiv.dataset.position = card.position;
-                
+
+                // Add archived badge if the card is archived
+                if (card.erledigt) {
+                    const archivedBadge = document.createElement('div');
+                    archivedBadge.className = 'archived-badge';
+                    archivedBadge.innerHTML = '<i class="bi bi-archive-fill"></i> Archived';
+                    cardDiv.appendChild(archivedBadge);
+                }
+
                 // Create header
                 const header = document.createElement('div');
                 header.className = 'kanban-card-header';
@@ -430,51 +469,51 @@
                 title.textContent = card.titel;
                 const actions = document.createElement('div');
                 actions.className = 'kanban-card-actions';
-                
+
                 actions.innerHTML = `
-                    <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                `;
-                
+                        <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    `;
+
                 header.appendChild(title);
                 header.appendChild(actions);
                 cardDiv.appendChild(header);
-                
+
                 // Create body with description and project name
                 const body = document.createElement('div');
                 body.className = 'kanban-card-body';
-                
+
                 if (card.beschreibung) {
                     const desc = document.createElement('p');
                     desc.textContent = card.beschreibung;
                     body.appendChild(desc);
                 }
-                
+
                 if (card.projektName) {
                     const projectBadge = document.createElement('div');
                     projectBadge.className = 'badge bg-info mb-2';
                     projectBadge.textContent = card.projektName;
                     body.appendChild(projectBadge);
                 }
-                
+
                 cardDiv.appendChild(body);
-                
+
                 // Create footer with assignee, priority, and due date
                 const footer = document.createElement('div');
                 footer.className = 'kanban-card-footer';
-                
+
                 // Add assignee if available
                 if (card.zugewiesenAnMitarbeiter) {
                     const assignee = document.createElement('div');
                     assignee.className = 'kanban-card-assignee';
                     assignee.innerHTML = `
-                        <i class="bi bi-person-fill"></i>
-                        ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
-                    `;
+                            <i class="bi bi-person-fill"></i>
+                            ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
+                        `;
                     footer.appendChild(assignee);
                 }
-                
+
                 // Add priority if available
                 const priorities = {
                     0: { name: 'Low', color: 'text-muted' },
@@ -482,16 +521,16 @@
                     2: { name: 'High', color: 'text-warning' },
                     3: { name: 'Critical', color: 'text-danger' }
                 };
-                
+
                 if (card.prioritaet > 0 && priorities[card.prioritaet]) {
                     const priority = document.createElement('div');
                     priority.className = `kanban-card-priority ${priorities[card.prioritaet].color}`;
                     priority.innerHTML = `
-                        <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
-                    `;
+                            <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
+                        `;
                     footer.appendChild(priority);
                 }
-                
+
                 // Add due date if available
                 if (card.faelligAm) {
                     const dueDate = new Date(card.faelligAm);
@@ -499,22 +538,22 @@
                     today.setHours(0, 0, 0, 0);
                     const daysLeft = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
                     const dateClass = daysLeft < 0 ? 'text-danger' : (daysLeft <= 2 ? 'text-warning' : 'text-info');
-                    
+
                     const due = document.createElement('div');
                     due.className = `kanban-card-due-date ${dateClass}`;
-                    
+
                     // Format date as dd.MM.yyyy
                     const day = dueDate.getDate().toString().padStart(2, '0');
                     const month = (dueDate.getMonth() + 1).toString().padStart(2, '0');
                     const year = dueDate.getFullYear();
                     const formattedDate = `${day}.${month}.${year}`;
-                    
+
                     due.innerHTML = `
-                        <i class="bi bi-calendar"></i> ${formattedDate}
-                    `;
+                            <i class="bi bi-calendar"></i> ${formattedDate}
+                        `;
                     footer.appendChild(due);
                 }
-                
+
                 cardDiv.appendChild(footer);
                 column.appendChild(cardDiv);
             }
