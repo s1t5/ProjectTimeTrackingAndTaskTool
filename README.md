@@ -20,7 +20,7 @@
 - Drag & Drop cards  
 - Deadline and priority management 
 - Task assignment 
-- Filter tasks
+- Filter and search tasks
 
 ### 📊 Reporting  
 - Time period filtered overviews  
