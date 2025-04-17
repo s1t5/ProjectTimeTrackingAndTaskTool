@@ -15,7 +15,8 @@
 - Manual time adjustment available  
 
 ### 📋 Kanban Board  
-- Project-specific boards  
+- Project-specific boards as well as
+- Cross-project board to display all tasks at a glance
 - Customizable buckets (Backlog, Open, In Progress, Done)  
 - Drag & Drop cards  
 - Deadline and priority management 
