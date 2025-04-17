@@ -26,7 +26,8 @@ namespace ProjektZeiterfassung.Controllers
                     {
                         MitarbeiterNr = m.MitarbeiterNr,
                         Name = m.Name,
-                        Vorname = m.Vorname
+                        Vorname = m.Vorname,
+                        Inactive = m.Inactive  // Add this line
                     })
                     .ToListAsync();
                 return View(mitarbeiter);
@@ -68,7 +69,8 @@ namespace ProjektZeiterfassung.Controllers
                     {
                         MitarbeiterNr = viewModel.MitarbeiterNr,
                         Name = viewModel.Name,
-                        Vorname = viewModel.Vorname
+                        Vorname = viewModel.Vorname,
+                        Inactive = viewModel.Inactive  // Add the inactive property
                     };
                     _context.Add(mitarbeiter);
                     await _context.SaveChangesAsync();
@@ -133,6 +135,7 @@ namespace ProjektZeiterfassung.Controllers
                     // Employee number cannot be changed, so we only take name and first name
                     mitarbeiter.Name = viewModel.Name;
                     mitarbeiter.Vorname = viewModel.Vorname;
+                    mitarbeiter.Inactive = viewModel.Inactive;
                     _context.Update(mitarbeiter);
                     await _context.SaveChangesAsync();
                     return RedirectToAction(nameof(Index));

@@ -42,6 +42,7 @@ namespace ProjektZeiterfassung.Controllers
                     .ToListAsync();
 
                 var mitarbeiter = await _context.Mitarbeiter
+                    .Where(m => !m.Inactive) // Only active employees
                     .OrderBy(m => m.Name)
                     .ThenBy(m => m.Vorname)
                     .ToListAsync();

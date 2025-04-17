@@ -245,3 +245,20 @@ BEGIN
         ('Done', 60, '#28a745', 1, NULL);
 END
 GO
+
+-- Add Inactive column to TMitarbeiter table
+IF NOT EXISTS (
+    SELECT * FROM sys.columns 
+    WHERE object_id = OBJECT_ID('dbo.TMitarbeiter') AND name = 'Inactive'
+)
+BEGIN
+    ALTER TABLE [dbo].[TMitarbeiter]
+    ADD [Inactive] [bit] NOT NULL DEFAULT(0);
+END
+GO
+
+-- Update existing records to set them as active
+UPDATE [dbo].[TMitarbeiter]
+SET [Inactive] = 0
+WHERE [Inactive] IS NULL;
+GO

@@ -63,8 +63,8 @@ namespace ProjektZeiterfassung.Controllers
                         var upcomingTasks = await _context.KanbanCards
                             .Include(c => c.Projekt)
                             .Include(c => c.Bucket)
-                            .Where(c => c.ZugewiesenAn == mitarbeiterNr && 
-                                       !c.Erledigt && 
+                            .Where(c => c.ZugewiesenAn == mitarbeiterNr &&
+                                       !c.Erledigt &&
                                        c.FaelligAm.HasValue)
                             .OrderBy(c => c.FaelligAm)
                             .Take(4)
@@ -97,8 +97,7 @@ namespace ProjektZeiterfassung.Controllers
         public async Task<IActionResult> VerifyMitarbeiter(int mitarbeiterNr)
         {
             var mitarbeiter = await _context.Mitarbeiter
-                .FirstOrDefaultAsync(m => m.MitarbeiterNr == mitarbeiterNr);
-
+                .FirstOrDefaultAsync(m => m.MitarbeiterNr == mitarbeiterNr && !m.Inactive);
             if (mitarbeiter == null)
             {
                 return Json(new { success = false });
@@ -362,14 +361,12 @@ namespace ProjektZeiterfassung.Controllers
         public async Task<IActionResult> GetMitarbeiterInfo(int mitarbeiterNr)
         {
             var mitarbeiter = await _context.Mitarbeiter
-                .FirstOrDefaultAsync(m => m.MitarbeiterNr == mitarbeiterNr);
-
+                .FirstOrDefaultAsync(m => m.MitarbeiterNr == mitarbeiterNr && !m.Inactive);
             if (mitarbeiter == null)
             {
                 return Json(new { success = false });
             }
 
-            // This method no longer sets a cookie, it is handled by VerifyMitarbeiter
             return Json(new
             {
                 success = true,

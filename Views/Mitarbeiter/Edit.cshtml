@@ -39,7 +39,14 @@
                             </div>
                         </div>
                     </div>
-
+                    <div class="form-group mb-3">
+                        <div class="form-check">
+                            <input asp-for="Inactive" class="form-check-input" />
+                            <label asp-for="Inactive" class="form-check-label">Inactive Employee</label>
+                        </div>
+                        <small class="form-text text-muted">Inactive employees won't appear in selection
+                            dropdowns.</small>
+                    </div>
                     <div class="form-group d-flex justify-content-between mt-4">
                         <a asp-action="Index" class="btn btn-secondary">Back to Overview</a>
                         <button type="submit" class="btn btn-primary">Save Changes</button>

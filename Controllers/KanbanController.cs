@@ -13,7 +13,7 @@ namespace ProjektZeiterfassung.Controllers
         private readonly ProjektDbContext _context;
         // Cookie name for employee number - imported from TimeTrackingController
         private const string MitarbeiterNrCookieName = "LastMitarbeiterNr";
-        
+
         public KanbanController(ProjektDbContext context)
         {
             _context = context;
@@ -37,7 +37,7 @@ namespace ProjektZeiterfassung.Controllers
                     .ToDictionaryAsync(x => x.ProjectId, x => x.Count);
 
                 ViewBag.ProjektTaskCounts = projektTaskCounts;
-                
+
                 // Ensure ViewBag properties are always initialized
                 ViewBag.AssignedTasks = new List<KanbanCard>();
                 ViewBag.MitarbeiterNr = null;
@@ -61,7 +61,7 @@ namespace ProjektZeiterfassung.Controllers
                         ViewBag.AssignedTasks = assignedTasks;
                     }
                 }
-                
+
                 return View(projekte);
             }
             catch (Exception ex)
@@ -78,7 +78,7 @@ namespace ProjektZeiterfassung.Controllers
             {
                 var projekt = await _context.Projekte
                     .FirstOrDefaultAsync(p => p.Projektnummer == id);
-                    
+
                 if (projekt == null)
                 {
                     return NotFound();
@@ -106,6 +106,7 @@ namespace ProjektZeiterfassung.Controllers
                     .ToListAsync();
 
                 var mitarbeiter = await _context.Mitarbeiter
+                    .Where(m => !m.Inactive) // Only active employees
                     .OrderBy(m => m.Name)
                     .ThenBy(m => m.Vorname)
                     .ToListAsync();
@@ -120,7 +121,7 @@ namespace ProjektZeiterfassung.Controllers
                     Mitarbeiter = mitarbeiter,
                     MeineAufgaben = new List<KanbanCard>()  // Initialization to avoid null reference
                 };
-                
+
                 // Read employee number and get current filter settings from query string
                 int? mitarbeiterNr = null;
                 if (Request.Cookies.TryGetValue(MitarbeiterNrCookieName, out string mitarbeiterNrStr) &&
@@ -129,40 +130,40 @@ namespace ProjektZeiterfassung.Controllers
                     mitarbeiterNr = parsedMitarbeiterNr;
                     model.AktuelleMitarbeiterNr = parsedMitarbeiterNr;
                 }
-                
+
                 // Apply filters if provided
                 int? filterAssigned = null;
-                if (Request.Query.TryGetValue("assigned", out var assignedValues) && 
+                if (Request.Query.TryGetValue("assigned", out var assignedValues) &&
                     int.TryParse(assignedValues.FirstOrDefault(), out int parsedAssigned))
                 {
                     filterAssigned = parsedAssigned;
                     model.FilterAssignedTo = parsedAssigned;
                 }
-                
+
                 DateTime? filterDueDate = null;
-                if (Request.Query.TryGetValue("due", out var dueValues) && 
+                if (Request.Query.TryGetValue("due", out var dueValues) &&
                     DateTime.TryParse(dueValues.FirstOrDefault(), out DateTime parsedDueDate))
                 {
                     filterDueDate = parsedDueDate;
                     model.FilterDueDate = parsedDueDate;
                 }
-                
+
                 // Apply filters to cards if needed
                 if (filterAssigned.HasValue || filterDueDate.HasValue)
                 {
                     var filteredCards = karten.ToList();
-                    
+
                     if (filterAssigned.HasValue)
                     {
                         filteredCards = filteredCards.Where(c => c.ZugewiesenAn == filterAssigned.Value).ToList();
                     }
-                    
+
                     if (filterDueDate.HasValue)
                     {
-                        filteredCards = filteredCards.Where(c => 
+                        filteredCards = filteredCards.Where(c =>
                             c.FaelligAm.HasValue && c.FaelligAm.Value.Date == filterDueDate.Value.Date).ToList();
                     }
-                    
+
                     model.Karten = filteredCards;
                 }
 
@@ -174,7 +175,7 @@ namespace ProjektZeiterfassung.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
-        
+
         // Refresh cards via AJAX
         [HttpPost]
         public async Task<IActionResult> RefreshCards(int projektId, int? assignedTo = null, DateTime? dueDate = null)
@@ -189,25 +190,25 @@ namespace ProjektZeiterfassung.Controllers
                     .Include(c => c.Bucket)
                     .Include(c => c.ZugewiesenAnMitarbeiter)
                     .Where(c => c.ProjektID == projektId);
-                
+
                 // Apply filters
                 if (assignedTo.HasValue)
                 {
                     query = query.Where(c => c.ZugewiesenAn == assignedTo.Value);
                 }
-                
+
                 if (dueDate.HasValue)
                 {
-                    query = query.Where(c => 
+                    query = query.Where(c =>
                         c.FaelligAm.HasValue && c.FaelligAm.Value.Date == dueDate.Value.Date);
                 }
-                
+
                 // Get filtered cards and map to DTOs
                 var cards = await query.OrderBy(c => c.Position).ToListAsync();
-                
+
                 // Group by bucket
                 var cardsByBucket = cards.GroupBy(c => c.BucketID);
-                
+
                 foreach (var group in cardsByBucket)
                 {
                     var cardDtos = new List<CardDTO>();
@@ -222,7 +223,7 @@ namespace ProjektZeiterfassung.Controllers
                             Position = card.Position,
                             Prioritaet = card.Prioritaet,
                             FaelligAm = card.FaelligAm,
-                            ZugewiesenAnMitarbeiter = card.ZugewiesenAnMitarbeiter != null ? 
+                            ZugewiesenAnMitarbeiter = card.ZugewiesenAnMitarbeiter != null ?
                                 new MitarbeiterDTO
                                 {
                                     MitarbeiterNr = card.ZugewiesenAnMitarbeiter.MitarbeiterNr,
@@ -233,7 +234,7 @@ namespace ProjektZeiterfassung.Controllers
                     }
                     dtoCards.Add(group.Key, cardDtos);
                 }
-                
+
                 return Json(new { success = true, cards = dtoCards });
             }
             catch (Exception ex)
@@ -249,7 +250,7 @@ namespace ProjektZeiterfassung.Controllers
             {
                 var projekt = await _context.Projekte
                     .FirstOrDefaultAsync(p => p.Projektnummer == id);
-                    
+
                 if (projekt == null)
                 {
                     return NotFound();
@@ -271,7 +272,7 @@ namespace ProjektZeiterfassung.Controllers
                 ViewBag.ProjektID = id;
                 ViewBag.ProjektName = projekt.Projektbezeichnung;
                 ViewBag.BoardGUID = projekt.BoardGUID;
-                
+
                 return View(buckets);
             }
             catch (Exception ex)
@@ -311,7 +312,7 @@ namespace ProjektZeiterfassung.Controllers
                     };
                     _context.KanbanBuckets.Add(bucket);
                     await _context.SaveChangesAsync();
-                    
+
                     return RedirectToAction(nameof(Buckets), new { id = viewModel.ProjektID });
                 }
                 catch (Exception ex)
@@ -319,7 +320,7 @@ namespace ProjektZeiterfassung.Controllers
                     ModelState.AddModelError("", $"Error saving: {ex.Message}");
                 }
             }
-            
+
             return View(viewModel);
         }
 
@@ -342,7 +343,7 @@ namespace ProjektZeiterfassung.Controllers
                     Farbe = bucket.Farbe,
                     ProjektID = bucket.ProjektID.Value
                 };
-                
+
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -376,7 +377,7 @@ namespace ProjektZeiterfassung.Controllers
                     bucket.Farbe = viewModel.Farbe;
                     _context.Update(bucket);
                     await _context.SaveChangesAsync();
-                    
+
                     return RedirectToAction(nameof(Buckets), new { id = viewModel.ProjektID });
                 }
                 catch (DbUpdateConcurrencyException)
@@ -395,7 +396,7 @@ namespace ProjektZeiterfassung.Controllers
                     ModelState.AddModelError("", $"Error saving: {ex.Message}");
                 }
             }
-            
+
             return View(viewModel);
         }
 
@@ -407,7 +408,7 @@ namespace ProjektZeiterfassung.Controllers
                 var bucket = await _context.KanbanBuckets
                     .Include(b => b.Karten)
                     .FirstOrDefaultAsync(b => b.BucketID == id);
-                    
+
                 if (bucket == null)
                 {
                     return NotFound();
@@ -423,7 +424,7 @@ namespace ProjektZeiterfassung.Controllers
                 int projektId = bucket.ProjektID.Value;
                 _context.KanbanBuckets.Remove(bucket);
                 await _context.SaveChangesAsync();
-                
+
                 return RedirectToAction(nameof(Buckets), new { id = projektId });
             }
             catch (Exception ex)
@@ -450,6 +451,7 @@ namespace ProjektZeiterfassung.Controllers
                     .ToList();
 
                 var mitarbeiter = await _context.Mitarbeiter
+                    .Where(m => !m.Inactive) // Only active employees
                     .OrderBy(m => m.Name)
                     .ThenBy(m => m.Vorname)
                     .ToListAsync();
@@ -485,7 +487,7 @@ namespace ProjektZeiterfassung.Controllers
                     ErstelltVon = currentMitarbeiterId ?? mitarbeiter.FirstOrDefault()?.MitarbeiterNr,
                     ZugewiesenAn = currentMitarbeiterId
                 };
-                
+
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -508,7 +510,7 @@ namespace ProjektZeiterfassung.Controllers
                     var cards = await _context.KanbanCards
                         .Where(c => c.BucketID == viewModel.BucketID)
                         .ToListAsync();
-                        
+
                     if (cards.Any())
                     {
                         maxPosition = cards.Max(c => c.Position);
@@ -541,10 +543,10 @@ namespace ProjektZeiterfassung.Controllers
                         Erledigt = false,
                         Position = maxPosition + 1
                     };
-                    
+
                     _context.KanbanCards.Add(card);
                     await _context.SaveChangesAsync();
-                    
+
                     return RedirectToAction(nameof(Board), new { id = viewModel.ProjektID });
                 }
                 catch (Exception ex)
@@ -552,7 +554,7 @@ namespace ProjektZeiterfassung.Controllers
                     ModelState.AddModelError("", $"Error saving card: {ex.Message}");
                 }
             }
-            
+
             await LoadFormData(viewModel);
             return View(viewModel);
         }
@@ -566,7 +568,7 @@ namespace ProjektZeiterfassung.Controllers
                     .Include(c => c.Bucket)
                     .Include(c => c.Projekt)
                     .FirstOrDefaultAsync(c => c.CardID == id);
-                    
+
                 if (card == null)
                 {
                     return NotFound();
@@ -584,6 +586,7 @@ namespace ProjektZeiterfassung.Controllers
                     .ToList();
 
                 var mitarbeiter = await _context.Mitarbeiter
+                    .Where(m => !m.Inactive) // Only active employees
                     .OrderBy(m => m.Name)
                     .ThenBy(m => m.Vorname)
                     .ToListAsync();
@@ -603,7 +606,7 @@ namespace ProjektZeiterfassung.Controllers
                     Buckets = finalBuckets,
                     Mitarbeiter = mitarbeiter
                 };
-                
+
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -638,12 +641,12 @@ namespace ProjektZeiterfassung.Controllers
                         var cards = await _context.KanbanCards
                             .Where(c => c.BucketID == viewModel.BucketID)
                             .ToListAsync();
-                            
+
                         if (cards.Any())
                         {
                             maxPosition = cards.Max(c => c.Position);
                         }
-                        
+
                         card.Position = maxPosition + 1;
                     }
 
@@ -653,10 +656,10 @@ namespace ProjektZeiterfassung.Controllers
                     card.ZugewiesenAn = viewModel.ZugewiesenAn;
                     card.Prioritaet = viewModel.Prioritaet;
                     card.FaelligAm = viewModel.FaelligAm;
-                    
+
                     _context.Update(card);
                     await _context.SaveChangesAsync();
-                    
+
                     return RedirectToAction(nameof(Board), new { id = viewModel.ProjektID });
                 }
                 catch (DbUpdateConcurrencyException)
@@ -675,7 +678,7 @@ namespace ProjektZeiterfassung.Controllers
                     ModelState.AddModelError("", $"Error saving: {ex.Message}");
                 }
             }
-            
+
             await LoadFormData(viewModel);
             return View(viewModel);
         }
@@ -688,7 +691,7 @@ namespace ProjektZeiterfassung.Controllers
                 var card = await _context.KanbanCards
                     .Include(c => c.Projekt)
                     .FirstOrDefaultAsync(c => c.CardID == id);
-                    
+
                 if (card == null)
                 {
                     return NotFound();
@@ -697,7 +700,7 @@ namespace ProjektZeiterfassung.Controllers
                 int projektId = card.ProjektID;
                 _context.KanbanCards.Remove(card);
                 await _context.SaveChangesAsync();
-                
+
                 return RedirectToAction(nameof(Board), new { id = projektId });
             }
             catch (Exception ex)
@@ -726,10 +729,10 @@ namespace ProjektZeiterfassung.Controllers
 
                 int oldBucketId = card.BucketID;
                 int oldPosition = card.Position;
-                
+
                 card.BucketID = model.NewBucketID;
                 card.Position = model.NewPosition;
-                
+
                 var bucket = await _context.KanbanBuckets.FindAsync(model.NewBucketID);
                 if (bucket != null && bucket.Name.ToLower().Contains("erledigt"))
                 {
@@ -746,7 +749,7 @@ namespace ProjektZeiterfassung.Controllers
                                      c.Position <= model.NewPosition &&
                                      c.CardID != model.CardID)
                             .ToListAsync();
-                            
+
                         foreach (var c in cardsToUpdate)
                         {
                             c.Position--;
@@ -760,7 +763,7 @@ namespace ProjektZeiterfassung.Controllers
                                      c.Position < oldPosition &&
                                      c.CardID != model.CardID)
                             .ToListAsync();
-                            
+
                         foreach (var c in cardsToUpdate)
                         {
                             c.Position++;
@@ -772,7 +775,7 @@ namespace ProjektZeiterfassung.Controllers
                     var cardsInOldBucket = await _context.KanbanCards
                         .Where(c => c.BucketID == oldBucketId && c.Position > oldPosition)
                         .ToListAsync();
-                        
+
                     foreach (var c in cardsInOldBucket)
                     {
                         c.Position--;
@@ -783,7 +786,7 @@ namespace ProjektZeiterfassung.Controllers
                                  c.Position >= model.NewPosition &&
                                  c.CardID != model.CardID)
                         .ToListAsync();
-                        
+
                     foreach (var c in cardsInNewBucket)
                     {
                         c.Position++;
@@ -799,7 +802,7 @@ namespace ProjektZeiterfassung.Controllers
             }
         }
 
-        // Helper method to load form data
+        // Update the LoadFormData method to filter out inactive employees
         private async Task LoadFormData(KanbanCardViewModel viewModel)
         {
             try
@@ -808,8 +811,9 @@ namespace ProjektZeiterfassung.Controllers
                     .Where(b => b.ProjektID == viewModel.ProjektID || (b.ProjektID == null && b.IstStandard))
                     .OrderBy(b => b.Reihenfolge)
                     .ToListAsync();
-                    
+
                 viewModel.Mitarbeiter = await _context.Mitarbeiter
+                    .Where(m => !m.Inactive) // Only active employees
                     .OrderBy(m => m.Name)
                     .ThenBy(m => m.Vorname)
                     .ToListAsync();

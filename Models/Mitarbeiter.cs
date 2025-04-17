@@ -5,5 +5,6 @@ namespace ProjektZeiterfassung.Models
         public int MitarbeiterNr { get; set; }
         public string? Name { get; set; }
         public string? Vorname { get; set; }
+        public bool Inactive { get; set; } = false;
     }
 }

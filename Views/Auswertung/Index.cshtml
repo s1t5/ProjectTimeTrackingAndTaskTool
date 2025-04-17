@@ -23,7 +23,9 @@
                     <option value="">All Employees</option>
                     @foreach (var ma in Model.Mitarbeiter)
                     {
-                        <option value="@ma.MitarbeiterNr">@ma.Vorname @ma.Name</option>
+                        <option value="@ma.MitarbeiterNr">
+                            @ma.Vorname @ma.Name @(ma.Inactive ? "(Inactive)" : "")
+                        </option>
                     }
                 </select>
             </div>
@@ -43,7 +45,7 @@
                         <i class="bi bi-search"></i> Filter
                     </button>
                     <a href="@Url.Action("ExportCsv", new { vonDatum = Model.VonDatum, bisDatum = Model.BisDatum, mitarbeiterId = Model.MitarbeiterId, projektId = Model.ProjektId })"
-                       class="btn btn-success">
+                        class="btn btn-success">
                         <i class="bi bi-download"></i> Export CSV
                     </a>
                 </div>
@@ -78,17 +80,15 @@
                     <div class="accordion-item">
                         <h4 class="accordion-header">
                             <button class="accordion-button @(mitarbeiter == Model.Zusammenfassung.First() ? "" : "collapsed")"
-                                    type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapse-@mitarbeiter.MitarbeiterId"
-                                    aria-expanded="@(mitarbeiter == Model.Zusammenfassung.First() ? "true" : "false")"
-                                    aria-controls="collapse-@mitarbeiter.MitarbeiterId">
+                                type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@mitarbeiter.MitarbeiterId"
+                                aria-expanded="@(mitarbeiter == Model.Zusammenfassung.First() ? "true" : "false")"
+                                aria-controls="collapse-@mitarbeiter.MitarbeiterId">
                                 @mitarbeiter.MitarbeiterName - Total time: @mitarbeiter.GesamtzeitFormatiert
                             </button>
                         </h4>
                         <div id="collapse-@mitarbeiter.MitarbeiterId"
-                             class="accordion-collapse collapse @(mitarbeiter == Model.Zusammenfassung.First() ? "show" : "")"
-                             data-bs-parent="#zusammenfassungAccordion">
+                            class="accordion-collapse collapse @(mitarbeiter == Model.Zusammenfassung.First() ? "show" : "")"
+                            data-bs-parent="#zusammenfassungAccordion">
                             <div class="accordion-body">
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped">
@@ -110,25 +110,27 @@
                                                     <td class="text-end">@projekt.AnfahrtszeitFormatiert</td>
                                                 </tr>
                                             }
-                                        </tbody>
-                                        <tfoot>
-                                            <tr class="table-primary">
-                                                <th>Total</th>
-                                                <th class="text-end">@mitarbeiter.GesamtzeitFormatiert</th>
-                                                <th class="text-end">
-                                                    @ProjektZeiterfassung.ViewModels.AuswertungViewModel.FormatMinutesToTime(mitarbeiter.ProjektZeiten.Sum(p => p.BerechenbareZeitInMinuten))
-                                                </th>
-                                                <th class="text-end">
-                                                    @ProjektZeiterfassung.ViewModels.AuswertungViewModel.FormatMinutesToTime(mitarbeiter.ProjektZeiten.Sum(p => p.AnfahrtszeitInMinuten))
-                                                </th>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
-                            </div>
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary">
+                                        <th>Total</th>
+                                        <th class="text-end">@mitarbeiter.GesamtzeitFormatiert</th>
+                                        <th class="text-end">
+                                            @ProjektZeiterfassung.ViewModels.AuswertungViewModel.FormatMinutesToTime(mitarbeiter.ProjektZeiten.Sum(p
+                                                                                        => p.BerechenbareZeitInMinuten))
+                                        </th>
+                                        <th class="text-end">
+                                            @ProjektZeiterfassung.ViewModels.AuswertungViewModel.FormatMinutesToTime(mitarbeiter.ProjektZeiten.Sum(p
+                                                                                        => p.AnfahrtszeitInMinuten))
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
                         </div>
                     </div>
-                }
+                </div>
+            </div>
+                        }
             </div>
         }
     </div>
@@ -165,7 +167,8 @@
                             <tr>
                                 <td>@aktivitaet.Datum.ToString("dd.MM.yyyy")</td>
                                 <td>@aktivitaet.Start.ToString(@"hh\:mm") - @aktivitaet.Ende.ToString(@"hh\:mm")</td>
-                                <td>@($"{aktivitaet.MitarbeiterObj?.Vorname ?? ""} {aktivitaet.MitarbeiterObj?.Name ?? ""}")</td>
+                                <td>@($"{aktivitaet.MitarbeiterObj?.Vorname ?? ""} {aktivitaet.MitarbeiterObj?.Name ?? ""}")
+                                </td>
                                 <td>@aktivitaet.Projekt?.Kunde?.Kundenname</td>
                                 <td>@aktivitaet.Projekt?.Projektbezeichnung</td>
                                 <td>@aktivitaet.Beschreibung</td>
