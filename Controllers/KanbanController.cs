@@ -841,6 +841,7 @@ namespace ProjektZeiterfassung.Controllers
         public int Position { get; set; }
         public int Prioritaet { get; set; }
         public DateTime? FaelligAm { get; set; }
+        public string ProjektName { get; set; }
         public MitarbeiterDTO ZugewiesenAnMitarbeiter { get; set; }
     }
 
