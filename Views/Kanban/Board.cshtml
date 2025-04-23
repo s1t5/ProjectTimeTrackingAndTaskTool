@@ -153,8 +153,8 @@
                                             <button type="button" class="btn btn-sm btn-outline-info show-comments"
                                                 data-card-id="@card.CardID" data-card-title="@card.Titel" title="Show comments">
                                                 <i class="bi bi-chat-text"></i>
+                                                <span class="comment-count">0</span>
                                             </button>
-                                            <!-- Archivieren/Wiederherstellen Button -->
                                             @if (card.Erledigt)
                                             {
                                                 <button type="button" class="btn btn-sm btn-outline-success unarchive-btn"
@@ -340,8 +340,10 @@
 
         .kanban-card-title {
             font-size: 1rem;
-            margin: 0;
+            margin: 8px 0 0 0;
             word-break: break-word;
+            text-align: center;
+            width: 100%;
         }
 
         .kanban-card-actions {
@@ -351,6 +353,7 @@
 
         .kanban-card-body {
             padding: 10px;
+            text-align: left;
         }
 
         .kanban-card-body p {
@@ -431,7 +434,8 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            background-color: #e9ecef;
+            background-color: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: 600;
@@ -456,6 +460,47 @@
             background-color: #0d6efd;
             border-radius: 50%;
         }
+
+        .comment-count {
+            display: inline-block;
+            min-width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #0d6efd;
+            color: white;
+            font-size: 0.7rem;
+            text-align: center;
+            margin-left: 2px;
+            padding: 0 2px;
+            line-height: 15px;
+        }
+
+        .comment-count:empty,
+        .comment-count:contains('0') {
+            display: none;
+        }
+
+        .kanban-card-title {
+            font-size: 1rem;
+            margin: 0 0 10px 0;
+            /* Abstand unter dem Titel für die Buttons */
+            word-break: break-word;
+            text-align: center;
+            width: 100%;
+        }
+
+        .kanban-card-header {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .kanban-card-actions {
+            display: flex;
+            gap: 5px;
+        }
     </style>
 }
 @section Scripts {
@@ -467,6 +512,7 @@
             const errorMessage = document.getElementById('errorMessage');
             const searchFilter = document.getElementById('searchFilter');
             const searchBtn = document.getElementById('searchBtn');
+
             // Helper function to show errors
             function showError(message) {
                 errorMessage.textContent = message;
@@ -476,10 +522,12 @@
                     errorContainer.style.display = 'none';
                 }, 5000);
             }
+
             // Search functionality
             function performSearch() {
                 const searchText = searchFilter?.value?.toLowerCase() || '';
                 if (!searchFilter) return;
+
                 const cards = document.querySelectorAll('.kanban-card');
                 if (!searchText || searchText === '') {
                     // If search is empty, show all cards
@@ -490,19 +538,23 @@
                     updateColumnCounters();
                     return;
                 }
+
                 cards.forEach(card => {
                     const title = card.querySelector('.kanban-card-title')?.textContent?.toLowerCase() || '';
                     const bodyElement = card.querySelector('.kanban-card-body');
                     const description = bodyElement ? bodyElement.textContent.toLowerCase() : '';
+
                     if (title.includes(searchText) || description.includes(searchText)) {
                         card.style.display = '';
                     } else {
                         card.style.display = 'none';
                     }
                 });
+
                 // Update counter badges
                 updateColumnCounters();
             }
+
             // Helper function to update column counters
             function updateColumnCounters() {
                 const columns = document.querySelectorAll('.kanban-column');
@@ -515,10 +567,12 @@
                     }
                 });
             }
+
             // Attach search events
             if (searchBtn) {
                 searchBtn.addEventListener('click', performSearch);
             }
+
             if (searchFilter) {
                 searchFilter.addEventListener('input', function () {
                     performSearch();
@@ -530,6 +584,7 @@
                     }
                 });
             }
+
             // Initialize Sortable for drag and drop functionality
             columns.forEach(column => {
                 new Sortable(column, {
@@ -542,10 +597,13 @@
                             const cardId = parseInt(evt.item.dataset.cardId);
                             const newBucketId = parseInt(evt.to.id.split('-')[1]);
                             const newPosition = Array.from(evt.to.children).indexOf(evt.item) + 1;
+
                             // Update data attributes
                             evt.item.dataset.position = newPosition;
+
                             // Get CSRF token
                             const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
                             // Send AJAX request to update card position
                             fetch('@Url.Action("MoveCard", "Kanban")', {
                                 method: 'POST',
@@ -566,7 +624,7 @@
                                     return response.json();
                                 })
                                 .then(data => {
-                                    if (!data.success) {
+                                    if (!data0.success) {
                                         throw new Error(data.message || 'Unknown server error');
                                     }
                                     console.log('Card position updated successfully');
@@ -586,22 +644,27 @@
                     }
                 });
             });
+
             // Function to refresh the board data
             window.refreshBoard = function () {
                 const refreshButton = document.getElementById('refreshButton');
                 refreshButton.classList.add('refreshing');
                 refreshButton.disabled = true;
+
                 // Get filter values
                 const assignedFilter = document.getElementById('assigned')?.value;
                 const dueFilter = document.getElementById('due')?.value;
                 const showArchived = document.getElementById('showArchived')?.checked || false;
+
                 // Prepare parameters for the fetch request
                 const params = new URLSearchParams();
                 params.append('projektId', @Model.ProjektID);
                 if (assignedFilter) params.append('assignedTo', assignedFilter);
                 if (dueFilter) params.append('dueDate', dueFilter);
                 params.append('showArchived', showArchived);
+
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
                 fetch('@Url.Action("RefreshCards", "Kanban")', {
                     method: 'POST',
                     headers: {
@@ -623,6 +686,7 @@
                             columns.forEach(column => {
                                 const bucketId = parseInt(column.id.split('-')[1]);
                                 column.innerHTML = '';
+
                                 // Add cards if this bucket has any
                                 if (data.cards[bucketId]) {
                                     data.cards[bucketId].forEach(card => {
@@ -633,6 +697,7 @@
                                     });
                                 }
                             });
+
                             // If search filter has text, reapply filter
                             if (searchFilter && searchFilter.value.trim() !== '') {
                                 performSearch();
@@ -649,7 +714,7 @@
                         refreshButton.disabled = false;
                     });
             };
-            // Helper function to render a card
+
             // Helper function to render a card
             function renderCard(column, card) {
                 const cardDiv = document.createElement('div');
@@ -671,46 +736,53 @@
                 // Create header
                 const header = document.createElement('div');
                 header.className = 'kanban-card-header';
-                const title = document.createElement('h5');
-                title.className = 'kanban-card-title';
-                title.textContent = card.titel;
+
+                // Create action buttons
                 const actions = document.createElement('div');
                 actions.className = 'kanban-card-actions';
 
                 // Action buttons with archive/unarchive
                 let actionButtons = `
-            <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-pencil"></i>
-            </a>
-            <button type="button" class="btn btn-sm btn-outline-info show-comments" 
-                    data-card-id="${card.cardID}" data-card-title="${card.titel}" title="Show comments">
-                <i class="bi bi-chat-text"></i>
-            </button>`;
+                                <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-info show-comments"
+                                        data-card-id="${card.cardID}" data-card-title="${card.titel}" title="Show comments">
+                                    <i class="bi bi-chat-text"></i>
+                                    <span class="comment-count">0</span>
+                                </button>`;
 
                 if (card.erledigt) {
                     actionButtons += `
-                <button type="button" class="btn btn-sm btn-outline-success unarchive-btn"
-                        data-card-id="${card.cardID}" title="Unarchive card">
-                    <i class="bi bi-arrow-counterclockwise"></i>
-                </button>`;
+                                    <button type="button" class="btn btn-sm btn-outline-success unarchive-btn"
+                                            data-card-id="${card.cardID}" title="Unarchive card">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>`;
                 } else {
                     actionButtons += `
-                <button type="button" class="btn btn-sm btn-outline-secondary archive-btn"
-                        data-card-id="${card.cardID}" title="Archive card">
-                    <i class="bi bi-archive"></i>
-                </button>`;
+                                    <button type="button" class="btn btn-sm btn-outline-secondary archive-btn"
+                                            data-card-id="${card.cardID}" title="Archive card">
+                                        <i class="bi bi-archive"></i>
+                                    </button>`;
                 }
 
                 actionButtons += `
-            <a href="@Url.Content("~/Kanban/DeleteCard/")${card.cardID}" class="btn btn-sm btn-outline-danger"
-               onclick="return confirm('Are you sure you want to delete this card?');">
-                <i class="bi bi-trash"></i>
-            </a>
-        `;
+                                <a href="@Url.Content("~/Kanban/DeleteCard/")${card.cardID}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Are you sure you want to delete this card?');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            `;
 
                 actions.innerHTML = actionButtons;
-                header.appendChild(title);
+
+                // Create title
+                const title = document.createElement('h5');
+                title.className = 'kanban-card-title';
+                title.textContent = card.titel;
+
+                // Add actions first, then title to header
                 header.appendChild(actions);
+                header.appendChild(title);
                 cardDiv.appendChild(header);
 
                 // Create body if there's a description
@@ -732,9 +804,9 @@
                     const assignee = document.createElement('div');
                     assignee.className = 'kanban-card-assignee';
                     assignee.innerHTML = `
-                <i class="bi bi-person-fill"></i>
-                ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
-            `;
+                                                    <i class="bi bi-person-fill"></i>
+                                                    ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
+                                                `;
                     footer.appendChild(assignee);
                 }
 
@@ -743,8 +815,8 @@
                     const storypoints = document.createElement('div');
                     storypoints.className = 'kanban-card-storypoints';
                     storypoints.innerHTML = `
-                <i class="bi bi-lightning-charge-fill"></i> ${card.storypoints} (SP)
-            `;
+                                                    <i class="bi bi-lightning-charge-fill"></i> ${card.storypoints} (SP)
+                                                `;
                     footer.appendChild(storypoints);
                 }
 
@@ -760,8 +832,8 @@
                     const priority = document.createElement('div');
                     priority.className = `kanban-card-priority ${priorities[card.prioritaet].color}`;
                     priority.innerHTML = `
-                <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
-            `;
+                                                    <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
+                                                `;
                     footer.appendChild(priority);
                 }
 
@@ -772,22 +844,46 @@
                     today.setHours(0, 0, 0, 0);
                     const daysLeft = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
                     const dateClass = daysLeft < 0 ? 'text-danger' : (daysLeft <= 2 ? 'text-warning' : 'text-info');
+
                     const due = document.createElement('div');
                     due.className = `kanban-card-due-date ${dateClass}`;
+
                     // Format date as dd.MM.yyyy
                     const day = dueDate.getDate().toString().padStart(2, '0');
                     const month = (dueDate.getMonth() + 1).toString().padStart(2, '0');
                     const year = dueDate.getFullYear();
                     const formattedDate = `${day}.${month}.${year}`;
+
                     due.innerHTML = `
-                <i class="bi bi-calendar"></i> ${formattedDate}
-            `;
+                                                    <i class="bi bi-calendar"></i> ${formattedDate}
+                                                `;
                     footer.appendChild(due);
                 }
 
                 cardDiv.appendChild(footer);
                 column.appendChild(cardDiv);
+
+                // After the card is added to the DOM, load the comment count
+                fetch(`@Url.Action("GetComments", "Kanban")?cardId=${card.cardID}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const commentCount = data.comments.length;
+                            const countElement = cardDiv.querySelector('.comment-count');
+                            if (countElement) {
+                                countElement.textContent = commentCount;
+                            }
+                            if (commentCount > 0) {
+                                const commentBtn = cardDiv.querySelector('.show-comments');
+                                if (commentBtn) {
+                                    commentBtn.setAttribute('data-has-comments', 'true');
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error loading comment count:', error));
             }
+
             // Archivieren und Wiederherstellen
             document.addEventListener('click', function (e) {
                 if (e.target.closest('.archive-btn')) {
@@ -800,9 +896,12 @@
                     unarchiveCard(cardId);
                 }
             });
+
             function archiveCard(cardId) {
                 if (!confirm('Are you sure you want to archive this card?')) return;
+
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
                 fetch(`@Url.Action("ArchiveCard", "Kanban")?id=${cardId}`, {
                     method: 'POST',
                     headers: {
@@ -820,8 +919,10 @@
                     })
                     .catch(error => showError(error.message));
             }
+
             function unarchiveCard(cardId) {
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
                 fetch(`@Url.Action("UnarchiveCard", "Kanban")?id=${cardId}`, {
                     method: 'POST',
                     headers: {
@@ -849,7 +950,6 @@
 
                 // Kommentare laden
                 loadComments(cardId);
-
                 $('#commentModal').modal('show');
             });
 
@@ -880,6 +980,25 @@
                             // Kommentarliste aktualisieren
                             $('#commentText').val('');
                             loadComments(cardId);
+
+                            // Update the comment count on the button
+                            const commentBtn = document.querySelector(`.show-comments[data-card-id="${cardId}"]`);
+                            if (commentBtn) {
+                                fetch(`@Url.Action("GetComments", "Kanban")?cardId=${cardId}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            const countElement = commentBtn.querySelector('.comment-count');
+                                            if (countElement) {
+                                                countElement.textContent = data.comments.length;
+                                            }
+                                            if (data.comments.length > 0) {
+                                                commentBtn.setAttribute('data-has-comments', 'true');
+                                            }
+                                        }
+                                    })
+                                    .catch(error => console.error('Error updating comment count:', error));
+                            }
                         } else {
                             alert('Error: ' + response.message);
                         }
@@ -894,8 +1013,8 @@
             $(document).on('click', '.edit-comment', function () {
                 const commentId = $(this).data('comment-id');
                 const commentText = $('#comment-text-' + commentId).text();
-
                 const newText = prompt('Edit comment:', commentText);
+
                 if (newText !== null && newText.trim() !== '') {
                     updateComment(commentId, newText);
                 }
@@ -971,6 +1090,7 @@
             // Funktion zum Löschen eines Kommentars
             function deleteComment(commentId) {
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const cardId = $('#commentCardId').val();
 
                 $.ajax({
                     url: '@Url.Action("DeleteComment", "Kanban")',
@@ -984,8 +1104,26 @@
                     success: function (response) {
                         if (response.success) {
                             // Aktualisiere die Kommentarliste
-                            const cardId = $('#commentCardId').val();
                             loadComments(cardId);
+
+                            // Update the comment count on the button
+                            const commentBtn = document.querySelector(`.show-comments[data-card-id="${cardId}"]`);
+                            if (commentBtn) {
+                                fetch(`@Url.Action("GetComments", "Kanban")?cardId=${cardId}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            const countElement = commentBtn.querySelector('.comment-count');
+                                            if (countElement) {
+                                                countElement.textContent = data.comments.length;
+                                            }
+                                            if (data.comments.length === 0) {
+                                                commentBtn.removeAttribute('data-has-comments');
+                                            }
+                                        }
+                                    })
+                                    .catch(error => console.error('Error updating comment count:', error));
+                            }
                         } else {
                             alert('Error: ' + response.message);
                         }
@@ -1003,36 +1141,56 @@
                 const isOwner = currentUserId == comment.createdById;
 
                 let html = `
-                    <div class="card mb-2">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>${comment.createdBy}</strong>
-                                <small class="text-muted ms-2">${comment.createdAt}</small>
-                            </div>`;
+                                                <div class="card mb-2">
+                                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>${comment.createdBy}</strong>
+                                                            <small class="text-muted ms-2">${comment.createdAt}</small>
+                                                        </div>`;
 
                 if (isOwner) {
                     html += `
-                            <div class="btn-group btn-group-sm">
-                                <button type="button" class="btn btn-outline-secondary edit-comment" 
-                                        data-comment-id="${comment.commentId}">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-danger delete-comment" 
-                                        data-comment-id="${comment.commentId}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>`;
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-secondary edit-comment"
+                                                                    data-comment-id="${comment.commentId}">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-danger delete-comment"
+                                                                    data-comment-id="${comment.commentId}">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>`;
                 }
 
                 html += `
-                        </div>
-                        <div class="card-body">
-                            <p id="comment-text-${comment.commentId}" class="mb-0">${comment.text}</p>
-                        </div>
-                    </div>`;
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <p id="comment-text-${comment.commentId}" class="mb-0">${comment.text}</p>
+                                                    </div>
+                                                </div>`;
 
                 return html;
             }
+
+            // Load comment counts for all cards when the page loads
+            document.querySelectorAll('.show-comments').forEach(button => {
+                const cardId = button.getAttribute('data-card-id');
+                fetch(`@Url.Action("GetComments", "Kanban")?cardId=${cardId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const commentCount = data.comments.length;
+                            const countElement = button.querySelector('.comment-count');
+                            if (countElement) {
+                                countElement.textContent = commentCount;
+                            }
+                            if (commentCount > 0) {
+                                button.setAttribute('data-has-comments', 'true');
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error loading comment count:', error));
+            });
         });
     </script>
 }

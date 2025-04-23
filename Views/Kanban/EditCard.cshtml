@@ -1,9 +1,19 @@
 ﻿@model ProjektZeiterfassung.ViewModels.KanbanCardViewModel
+@using ProjektZeiterfassung.Controllers
 @{
     ViewData["Title"] = "Edit Card";
+    
+    // Get the current employee ID from cookie
+    int currentMitarbeiterId = 0;
+    if (Context.Request.Cookies.TryGetValue(ZeiterfassungController.MitarbeiterNrCookieName, out string mitarbeiterNrStr) &&
+        int.TryParse(mitarbeiterNrStr, out int parsedMitarbeiterId))
+    {
+        currentMitarbeiterId = parsedMitarbeiterId;
+    }
 }
+
 <div class="row">
-    <div class="col-md-8 mx-auto">
+    <div class="col-md-8">
         <div class="card">
             <div class="card-header">
                 <h2>Edit Card</h2>
@@ -93,9 +103,226 @@
             </div>
         </div>
     </div>
+    
+    <!-- Comments section -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>Comments</h3>
+            </div>
+            <div class="card-body">
+                <div id="commentsList" class="mb-3">
+                    <!-- Comments will be loaded here -->
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <form id="commentForm" class="mt-3">
+                    <input type="hidden" id="commentCardId" name="cardId" value="@Model.CardID" />
+                    <div class="form-group">
+                        <label for="commentText">Add a comment</label>
+                        <textarea class="form-control" id="commentText" name="comment" rows="2" required></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary mt-2" id="submitComment">Add Comment</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    
+    <script>
+        $(document).ready(function() {
+            const currentUserId = @currentMitarbeiterId;
+            
+            // Load comments when the page loads
+            loadComments(@Model.CardID);
+            
+            // Submit comment
+            $('#submitComment').click(function() {
+                const cardId = $('#commentCardId').val();
+                const commentText = $('#commentText').val().trim();
+                if (!commentText) {
+                    alert('Please enter a comment');
+                    return;
+                }
+                
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                $.ajax({
+                    url: '@Url.Action("AddComment", "Kanban")',
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    data: {
+                        cardId: cardId,
+                        comment: commentText
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Clear the comment input and reload comments
+                            $('#commentText').val('');
+                            loadComments(cardId);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error adding comment: ' + xhr.responseText);
+                    }
+                });
+            });
+            
+            // Edit comment event delegation
+            $(document).on('click', '.edit-comment', function() {
+                const commentId = $(this).data('comment-id');
+                const commentText = $('#comment-text-' + commentId).text();
+                const newText = prompt('Edit comment:', commentText);
+                if (newText !== null && newText.trim() !== '') {
+                    updateComment(commentId, newText);
+                }
+            });
+            
+            // Delete comment event delegation
+            $(document).on('click', '.delete-comment', function() {
+                const commentId = $(this).data('comment-id');
+                if (confirm('Are you sure you want to delete this comment?')) {
+                    deleteComment(commentId);
+                }
+            });
+            
+            // Function to load comments
+            function loadComments(cardId) {
+                $.ajax({
+                    url: '@Url.Action("GetComments", "Kanban")',
+                    type: 'GET',
+                    data: { cardId: cardId },
+                    success: function(response) {
+                        if (response.success) {
+                            let html = '';
+                            if (response.comments.length === 0) {
+                                html = '<p class="text-muted">No comments yet.</p>';
+                            } else {
+                                response.comments.forEach(function(comment) {
+                                    html += createCommentHtml(comment);
+                                });
+                            }
+                            $('#commentsList').html(html);
+                        } else {
+                            $('#commentsList').html('<p class="text-danger">Error loading comments: ' + response.message + '</p>');
+                        }
+                    },
+                    error: function(xhr) {
+                        $('#commentsList').html('<p class="text-danger">Error loading comments</p>');
+                    }
+                });
+            }
+            
+            // Function to update comment
+            function updateComment(commentId, commentText) {
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                $.ajax({
+                    url: '@Url.Action("EditComment", "Kanban")',
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    data: {
+                        commentId: commentId,
+                        comment: commentText
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Reload comments
+                            loadComments(@Model.CardID);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error updating comment: ' + xhr.responseText);
+                    }
+                });
+            }
+            
+            // Function to delete comment
+            function deleteComment(commentId) {
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                $.ajax({
+                    url: '@Url.Action("DeleteComment", "Kanban")',
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    data: {
+                        commentId: commentId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Reload comments
+                            loadComments(@Model.CardID);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error deleting comment: ' + xhr.responseText);
+                    }
+                });
+            }
+            
+            // Helper function for comment HTML
+            function createCommentHtml(comment) {
+                const isOwner = currentUserId == comment.createdById;
+                
+                let html = `
+                    <div class="card mb-2">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${comment.createdBy}</strong>
+                                <small class="text-muted ms-2">${comment.createdAt}</small>
+                            </div>`;
+                
+                if (isOwner) {
+                    html += `
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-secondary edit-comment"
+                                        data-comment-id="${comment.commentId}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger delete-comment"
+                                        data-comment-id="${comment.commentId}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>`;
+                }
+                
+                html += `
+                        </div>
+                        <div class="card-body">
+                            <p id="comment-text-${comment.commentId}" class="mb-0">${comment.text}</p>
+                        </div>
+                    </div>`;
+                    
+                return html;
+            }
+        });
+    </script>
+    
+    <style>
+        #commentsList {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+        }
+    </style>
 }
