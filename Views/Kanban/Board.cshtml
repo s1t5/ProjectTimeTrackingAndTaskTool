@@ -624,7 +624,7 @@
                                     return response.json();
                                 })
                                 .then(data => {
-                                    if (!data0.success) {
+                                    if (!data.success) {  // CORRECTED
                                         throw new Error(data.message || 'Unknown server error');
                                     }
                                     console.log('Card position updated successfully');
@@ -743,35 +743,35 @@
 
                 // Action buttons with archive/unarchive
                 let actionButtons = `
-                                <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <button type="button" class="btn btn-sm btn-outline-info show-comments"
-                                        data-card-id="${card.cardID}" data-card-title="${card.titel}" title="Show comments">
-                                    <i class="bi bi-chat-text"></i>
-                                    <span class="comment-count">0</span>
-                                </button>`;
+                                    <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-info show-comments"
+                                            data-card-id="${card.cardID}" data-card-title="${card.titel}" title="Show comments">
+                                        <i class="bi bi-chat-text"></i>
+                                        <span class="comment-count">0</span>
+                                    </button>`;
 
                 if (card.erledigt) {
                     actionButtons += `
-                                    <button type="button" class="btn btn-sm btn-outline-success unarchive-btn"
-                                            data-card-id="${card.cardID}" title="Unarchive card">
-                                        <i class="bi bi-arrow-counterclockwise"></i>
-                                    </button>`;
+                                        <button type="button" class="btn btn-sm btn-outline-success unarchive-btn"
+                                                data-card-id="${card.cardID}" title="Unarchive card">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>`;
                 } else {
                     actionButtons += `
-                                    <button type="button" class="btn btn-sm btn-outline-secondary archive-btn"
-                                            data-card-id="${card.cardID}" title="Archive card">
-                                        <i class="bi bi-archive"></i>
-                                    </button>`;
+                                        <button type="button" class="btn btn-sm btn-outline-secondary archive-btn"
+                                                data-card-id="${card.cardID}" title="Archive card">
+                                            <i class="bi bi-archive"></i>
+                                        </button>`;
                 }
 
                 actionButtons += `
-                                <a href="@Url.Content("~/Kanban/DeleteCard/")${card.cardID}" class="btn btn-sm btn-outline-danger"
-                                   onclick="return confirm('Are you sure you want to delete this card?');">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                            `;
+                                    <a href="@Url.Content("~/Kanban/DeleteCard/")${card.cardID}" class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('Are you sure you want to delete this card?');">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                `;
 
                 actions.innerHTML = actionButtons;
 
@@ -781,8 +781,8 @@
                 title.textContent = card.titel;
 
                 // Add actions first, then title to header
-                header.appendChild(actions);
                 header.appendChild(title);
+                header.appendChild(actions);
                 cardDiv.appendChild(header);
 
                 // Create body if there's a description
@@ -804,9 +804,9 @@
                     const assignee = document.createElement('div');
                     assignee.className = 'kanban-card-assignee';
                     assignee.innerHTML = `
-                                                    <i class="bi bi-person-fill"></i>
-                                                    ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
-                                                `;
+                                                        <i class="bi bi-person-fill"></i>
+                                                        ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
+                                                    `;
                     footer.appendChild(assignee);
                 }
 
@@ -815,8 +815,8 @@
                     const storypoints = document.createElement('div');
                     storypoints.className = 'kanban-card-storypoints';
                     storypoints.innerHTML = `
-                                                    <i class="bi bi-lightning-charge-fill"></i> ${card.storypoints} (SP)
-                                                `;
+                                                        <i class="bi bi-lightning-charge-fill"></i> ${card.storypoints} (SP)
+                                                    `;
                     footer.appendChild(storypoints);
                 }
 
@@ -832,8 +832,8 @@
                     const priority = document.createElement('div');
                     priority.className = `kanban-card-priority ${priorities[card.prioritaet].color}`;
                     priority.innerHTML = `
-                                                    <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
-                                                `;
+                                                        <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
+                                                    `;
                     footer.appendChild(priority);
                 }
 
@@ -855,8 +855,8 @@
                     const formattedDate = `${day}.${month}.${year}`;
 
                     due.innerHTML = `
-                                                    <i class="bi bi-calendar"></i> ${formattedDate}
-                                                `;
+                                                        <i class="bi bi-calendar"></i> ${formattedDate}
+                                                    `;
                     footer.appendChild(due);
                 }
 
@@ -1141,33 +1141,33 @@
                 const isOwner = currentUserId == comment.createdById;
 
                 let html = `
-                                                <div class="card mb-2">
-                                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <strong>${comment.createdBy}</strong>
-                                                            <small class="text-muted ms-2">${comment.createdAt}</small>
-                                                        </div>`;
+                                                    <div class="card mb-2">
+                                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong>${comment.createdBy}</strong>
+                                                                <small class="text-muted ms-2">${comment.createdAt}</small>
+                                                            </div>`;
 
                 if (isOwner) {
                     html += `
-                                                        <div class="btn-group btn-group-sm">
-                                                            <button type="button" class="btn btn-outline-secondary edit-comment"
-                                                                    data-comment-id="${comment.commentId}">
-                                                                <i class="bi bi-pencil"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-outline-danger delete-comment"
-                                                                    data-comment-id="${comment.commentId}">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </div>`;
+                                                            <div class="btn-group btn-group-sm">
+                                                                <button type="button" class="btn btn-outline-secondary edit-comment"
+                                                                        data-comment-id="${comment.commentId}">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-outline-danger delete-comment"
+                                                                        data-comment-id="${comment.commentId}">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </div>`;
                 }
 
                 html += `
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <p id="comment-text-${comment.commentId}" class="mb-0">${comment.text}</p>
-                                                    </div>
-                                                </div>`;
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <p id="comment-text-${comment.commentId}" class="mb-0">${comment.text}</p>
+                                                        </div>
+                                                    </div>`;
 
                 return html;
             }
