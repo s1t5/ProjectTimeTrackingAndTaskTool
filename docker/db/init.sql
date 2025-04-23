@@ -262,3 +262,43 @@ UPDATE [dbo].[TMitarbeiter]
 SET [Inactive] = 0
 WHERE [Inactive] IS NULL;
 GO
+
+-- TKanbanComments
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TKanbanComments')
+BEGIN
+    CREATE TABLE [dbo].[TKanbanComments](
+        [CommentID] [int] IDENTITY(1,1) NOT NULL,
+        [CardID] [int] NOT NULL,
+        [Comment] [text] NULL,
+        [ErstelltVon] [int] NOT NULL,
+        [ErstelltAm] [datetime] NOT NULL DEFAULT(GETDATE()),
+        CONSTRAINT [PK_TKanbanComments] PRIMARY KEY CLUSTERED ([CommentID] ASC)
+    );
+END
+GO
+
+-- Foreign Keys für TKanbanComments
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_TKanbanComments_TKanbanCards')
+BEGIN
+    ALTER TABLE [dbo].[TKanbanComments] ADD CONSTRAINT [FK_TKanbanComments_TKanbanCards]
+    FOREIGN KEY ([CardID]) REFERENCES [dbo].[TKanbanCards] ([CardID]) ON DELETE CASCADE;
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_TKanbanComments_TMitarbeiter')
+BEGIN
+    ALTER TABLE [dbo].[TKanbanComments] ADD CONSTRAINT [FK_TKanbanComments_TMitarbeiter]
+    FOREIGN KEY ([ErstelltVon]) REFERENCES [dbo].[TMitarbeiter] ([MitarbeiterNr]);
+END
+GO
+
+-- Add Storypoints column to TKanbanCards
+IF NOT EXISTS (
+    SELECT * FROM sys.columns
+    WHERE object_id = OBJECT_ID('dbo.TKanbanCards') AND name = 'Storypoints'
+)
+BEGIN
+    ALTER TABLE [dbo].[TKanbanCards]
+    ADD [Storypoints] [int] NULL;
+END
+GO

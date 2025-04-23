@@ -45,5 +45,7 @@ namespace ProjektZeiterfassung.Models
 
         [ForeignKey("ZugewiesenAn")]
         public Mitarbeiter? ZugewiesenAnMitarbeiter { get; set; }
+        public int? Storypoints { get; set; }
+        public ICollection<KanbanComment> Comments { get; set; }
     }
 }

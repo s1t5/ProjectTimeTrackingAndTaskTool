@@ -11,7 +11,6 @@
     // Set a different layout for the Board view to use full width
     Layout = "_FullWidthLayout";
 }
-
 <div class="d-flex justify-content-between mb-3 align-items-center">
     <h1>@Model.ProjektName</h1>
     <div>
@@ -29,7 +28,6 @@
         </button>
     </div>
 </div>
-
 @if (!string.IsNullOrEmpty(TempData["ErrorMessage"] as string))
 {
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -37,7 +35,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
-
 <!-- Filter section -->
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
@@ -91,7 +88,6 @@
                         </button>
                     </div>
                 </div>
-
                 <!-- Neues Archiv-Filterelement -->
                 <div class="col-md-12">
                     <div class="form-check form-switch">
@@ -100,7 +96,6 @@
                         <label class="form-check-label" for="showArchived">Show Archived Cards</label>
                     </div>
                 </div>
-
                 <div class="col-md-12 d-flex justify-content-end mt-3">
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Apply Filters</button>
@@ -112,7 +107,6 @@
         </div>
     </div>
 </div>
-
 <div class="kanban-container">
     @if (Model.Buckets == null || !Model.Buckets.Any())
     {
@@ -156,6 +150,10 @@
                                             <a asp-action="EditCard" asp-route-id="@card.CardID" class="btn btn-sm btn-outline-primary">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
+                                            <button type="button" class="btn btn-sm btn-outline-info show-comments"
+                                                data-card-id="@card.CardID" data-card-title="@card.Titel" title="Show comments">
+                                                <i class="bi bi-chat-text"></i>
+                                            </button>
                                             <!-- Archivieren/Wiederherstellen Button -->
                                             @if (card.Erledigt)
                                             {
@@ -196,6 +194,12 @@
                                                 </div>
                                             }
                                         }
+                                        @if (card.Storypoints.HasValue && card.Storypoints.Value > 0)
+                                        {
+                                            <div class="kanban-card-storypoints">
+                                                <i class="bi bi-lightning-charge-fill"></i> @card.Storypoints (SP)
+                                            </div>
+                                        }
                                         @if (card.Prioritaet > 0 && priorities.ContainsKey(card.Prioritaet))
                                         {
                                             var (name, color) = priorities[card.Prioritaet];
@@ -228,13 +232,40 @@
     }
 </div>
 
+<!-- Modal für Kommentare -->
+<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="commentModalLabel">Card Comments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="commentsList" class="mb-3">
+                    <!-- Comments will be loaded here -->
+                </div>
+                <form id="commentForm" class="mt-3">
+                    <input type="hidden" id="commentCardId" name="cardId" />
+                    <div class="form-group">
+                        <label for="commentText">Add a comment</label>
+                        <textarea class="form-control" id="commentText" name="comment" rows="2" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitComment">Add Comment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="errorContainer" style="display:none;"
     class="alert alert-danger alert-dismissible fade show fixed-top mx-auto mt-3"
     style="max-width:500px; z-index:9999;">
     <span id="errorMessage"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
-
 @section Styles {
     <style>
         body {
@@ -395,9 +426,38 @@
             border-radius: 0 4px 0 4px;
             font-size: 0.7rem;
         }
+
+        .kanban-card-storypoints {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        #commentsList {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .show-comments {
+            position: relative;
+        }
+
+        .show-comments[data-has-comments="true"]::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            background-color: #0d6efd;
+            border-radius: 50%;
+        }
     </style>
 }
-
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
     <script>
@@ -531,19 +591,16 @@
                 const refreshButton = document.getElementById('refreshButton');
                 refreshButton.classList.add('refreshing');
                 refreshButton.disabled = true;
-
                 // Get filter values
                 const assignedFilter = document.getElementById('assigned')?.value;
                 const dueFilter = document.getElementById('due')?.value;
                 const showArchived = document.getElementById('showArchived')?.checked || false;
-
                 // Prepare parameters for the fetch request
                 const params = new URLSearchParams();
                 params.append('projektId', @Model.ProjektID);
                 if (assignedFilter) params.append('assignedTo', assignedFilter);
                 if (dueFilter) params.append('dueDate', dueFilter);
                 params.append('showArchived', showArchived);
-
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
                 fetch('@Url.Action("RefreshCards", "Kanban")', {
                     method: 'POST',
@@ -562,7 +619,6 @@
                     .then(data => {
                         if (data.success) {
                             console.log("Refreshing with showArchived:", showArchived);  // Debug log
-
                             // Clear all bucket contents
                             columns.forEach(column => {
                                 const bucketId = parseInt(column.id.split('-')[1]);
@@ -577,7 +633,6 @@
                                     });
                                 }
                             });
-
                             // If search filter has text, reapply filter
                             if (searchFilter && searchFilter.value.trim() !== '') {
                                 performSearch();
@@ -594,6 +649,7 @@
                         refreshButton.disabled = false;
                     });
             };
+            // Helper function to render a card
             // Helper function to render a card
             function renderCard(column, card) {
                 const cardDiv = document.createElement('div');
@@ -623,30 +679,34 @@
 
                 // Action buttons with archive/unarchive
                 let actionButtons = `
-                            <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil"></i>
-                            </a>`;
+            <a href="@Url.Content("~/Kanban/EditCard/")${card.cardID}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-info show-comments" 
+                    data-card-id="${card.cardID}" data-card-title="${card.titel}" title="Show comments">
+                <i class="bi bi-chat-text"></i>
+            </button>`;
 
                 if (card.erledigt) {
                     actionButtons += `
-                            <button type="button" class="btn btn-sm btn-outline-success unarchive-btn" 
-                                    data-card-id="${card.cardID}" title="Unarchive card">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </button>`;
+                <button type="button" class="btn btn-sm btn-outline-success unarchive-btn"
+                        data-card-id="${card.cardID}" title="Unarchive card">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </button>`;
                 } else {
                     actionButtons += `
-                            <button type="button" class="btn btn-sm btn-outline-secondary archive-btn" 
-                                    data-card-id="${card.cardID}" title="Archive card">
-                                <i class="bi bi-archive"></i>
-                            </button>`;
+                <button type="button" class="btn btn-sm btn-outline-secondary archive-btn"
+                        data-card-id="${card.cardID}" title="Archive card">
+                    <i class="bi bi-archive"></i>
+                </button>`;
                 }
 
                 actionButtons += `
-                            <a href="@Url.Content("~/Kanban/DeleteCard/")${card.cardID}" class="btn btn-sm btn-outline-danger"
-                               onclick="return confirm('Are you sure you want to delete this card?');">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        `;
+            <a href="@Url.Content("~/Kanban/DeleteCard/")${card.cardID}" class="btn btn-sm btn-outline-danger"
+               onclick="return confirm('Are you sure you want to delete this card?');">
+                <i class="bi bi-trash"></i>
+            </a>
+        `;
 
                 actions.innerHTML = actionButtons;
                 header.appendChild(title);
@@ -662,19 +722,32 @@
                     body.appendChild(desc);
                     cardDiv.appendChild(body);
                 }
+
                 // Create footer with assignee, priority, and due date
                 const footer = document.createElement('div');
                 footer.className = 'kanban-card-footer';
+
                 // Add assignee if available
                 if (card.zugewiesenAnMitarbeiter) {
                     const assignee = document.createElement('div');
                     assignee.className = 'kanban-card-assignee';
                     assignee.innerHTML = `
-                                <i class="bi bi-person-fill"></i>
-                                ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
-                            `;
+                <i class="bi bi-person-fill"></i>
+                ${card.zugewiesenAnMitarbeiter.vorname} ${card.zugewiesenAnMitarbeiter.name}
+            `;
                     footer.appendChild(assignee);
                 }
+
+                // Add storypoints if available - WICHTIG: Hier ist der Fix
+                if (card.storypoints && card.storypoints > 0) {
+                    const storypoints = document.createElement('div');
+                    storypoints.className = 'kanban-card-storypoints';
+                    storypoints.innerHTML = `
+                <i class="bi bi-lightning-charge-fill"></i> ${card.storypoints} (SP)
+            `;
+                    footer.appendChild(storypoints);
+                }
+
                 // Add priority if available
                 const priorities = {
                     0: { name: 'Low', color: 'text-muted' },
@@ -682,14 +755,16 @@
                     2: { name: 'High', color: 'text-warning' },
                     3: { name: 'Critical', color: 'text-danger' }
                 };
+
                 if (card.prioritaet > 0 && priorities[card.prioritaet]) {
                     const priority = document.createElement('div');
                     priority.className = `kanban-card-priority ${priorities[card.prioritaet].color}`;
                     priority.innerHTML = `
-                                <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
-                            `;
+                <i class="bi bi-flag-fill"></i> ${priorities[card.prioritaet].name}
+            `;
                     footer.appendChild(priority);
                 }
+
                 // Add due date if available
                 if (card.faelligAm) {
                     const dueDate = new Date(card.faelligAm);
@@ -705,14 +780,14 @@
                     const year = dueDate.getFullYear();
                     const formattedDate = `${day}.${month}.${year}`;
                     due.innerHTML = `
-                                <i class="bi bi-calendar"></i> ${formattedDate}
-                            `;
+                <i class="bi bi-calendar"></i> ${formattedDate}
+            `;
                     footer.appendChild(due);
                 }
+
                 cardDiv.appendChild(footer);
                 column.appendChild(cardDiv);
             }
-
             // Archivieren und Wiederherstellen
             document.addEventListener('click', function (e) {
                 if (e.target.closest('.archive-btn')) {
@@ -725,10 +800,8 @@
                     unarchiveCard(cardId);
                 }
             });
-
             function archiveCard(cardId) {
                 if (!confirm('Are you sure you want to archive this card?')) return;
-
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
                 fetch(`@Url.Action("ArchiveCard", "Kanban")?id=${cardId}`, {
                     method: 'POST',
@@ -747,7 +820,6 @@
                     })
                     .catch(error => showError(error.message));
             }
-
             function unarchiveCard(cardId) {
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
                 fetch(`@Url.Action("UnarchiveCard", "Kanban")?id=${cardId}`, {
@@ -766,6 +838,200 @@
                         }
                     })
                     .catch(error => showError(error.message));
+            }
+
+            // Kommentar-Modal öffnen
+            $(document).on('click', '.show-comments', function () {
+                const cardId = $(this).data('card-id');
+                const cardTitle = $(this).data('card-title');
+                $('#commentCardId').val(cardId);
+                $('#commentModalLabel').text('Comments: ' + cardTitle);
+
+                // Kommentare laden
+                loadComments(cardId);
+
+                $('#commentModal').modal('show');
+            });
+
+            // Kommentar hinzufügen
+            $('#submitComment').click(function () {
+                const cardId = $('#commentCardId').val();
+                const commentText = $('#commentText').val().trim();
+
+                if (!commentText) {
+                    alert('Please enter a comment');
+                    return;
+                }
+
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                $.ajax({
+                    url: '@Url.Action("AddComment", "Kanban")',
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    data: {
+                        cardId: cardId,
+                        comment: commentText
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Kommentarliste aktualisieren
+                            $('#commentText').val('');
+                            loadComments(cardId);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Error adding comment: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            // Kommentar bearbeiten
+            $(document).on('click', '.edit-comment', function () {
+                const commentId = $(this).data('comment-id');
+                const commentText = $('#comment-text-' + commentId).text();
+
+                const newText = prompt('Edit comment:', commentText);
+                if (newText !== null && newText.trim() !== '') {
+                    updateComment(commentId, newText);
+                }
+            });
+
+            // Kommentar löschen
+            $(document).on('click', '.delete-comment', function () {
+                const commentId = $(this).data('comment-id');
+
+                if (confirm('Are you sure you want to delete this comment?')) {
+                    deleteComment(commentId);
+                }
+            });
+
+            // Funktion zum Laden der Kommentare
+            function loadComments(cardId) {
+                $.ajax({
+                    url: '@Url.Action("GetComments", "Kanban")',
+                    type: 'GET',
+                    data: { cardId: cardId },
+                    success: function (response) {
+                        if (response.success) {
+                            let html = '';
+
+                            if (response.comments.length === 0) {
+                                html = '<p class="text-muted">No comments yet.</p>';
+                            } else {
+                                response.comments.forEach(function (comment) {
+                                    html += createCommentHtml(comment);
+                                });
+                            }
+
+                            $('#commentsList').html(html);
+                        } else {
+                            $('#commentsList').html('<p class="text-danger">Error loading comments: ' + response.message + '</p>');
+                        }
+                    },
+                    error: function (xhr) {
+                        $('#commentsList').html('<p class="text-danger">Error loading comments</p>');
+                    }
+                });
+            }
+
+            // Funktion zum Aktualisieren eines Kommentars
+            function updateComment(commentId, commentText) {
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                $.ajax({
+                    url: '@Url.Action("EditComment", "Kanban")',
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    data: {
+                        commentId: commentId,
+                        comment: commentText
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Aktualisiere die Kommentarliste
+                            const cardId = $('#commentCardId').val();
+                            loadComments(cardId);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Error updating comment: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            // Funktion zum Löschen eines Kommentars
+            function deleteComment(commentId) {
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                $.ajax({
+                    url: '@Url.Action("DeleteComment", "Kanban")',
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    data: {
+                        commentId: commentId
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Aktualisiere die Kommentarliste
+                            const cardId = $('#commentCardId').val();
+                            loadComments(cardId);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert('Error deleting comment: ' + xhr.responseText);
+                    }
+                });
+            }
+
+            // Hilfsfunktion zum Erstellen des HTML für einen Kommentar
+            function createCommentHtml(comment) {
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                const currentUserId = @Html.Raw(Json.Serialize(Model.AktuelleMitarbeiterNr));
+                const isOwner = currentUserId == comment.createdById;
+
+                let html = `
+                    <div class="card mb-2">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${comment.createdBy}</strong>
+                                <small class="text-muted ms-2">${comment.createdAt}</small>
+                            </div>`;
+
+                if (isOwner) {
+                    html += `
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-secondary edit-comment" 
+                                        data-comment-id="${comment.commentId}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger delete-comment" 
+                                        data-comment-id="${comment.commentId}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>`;
+                }
+
+                html += `
+                        </div>
+                        <div class="card-body">
+                            <p id="comment-text-${comment.commentId}" class="mb-0">${comment.text}</p>
+                        </div>
+                    </div>`;
+
+                return html;
             }
         });
     </script>

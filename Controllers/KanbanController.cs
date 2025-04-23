@@ -237,6 +237,7 @@ namespace ProjektZeiterfassung.Controllers
                             Prioritaet = card.Prioritaet,
                             FaelligAm = card.FaelligAm,
                             Erledigt = card.Erledigt,
+                            Storypoints = card.Storypoints,
                             ZugewiesenAnMitarbeiter = card.ZugewiesenAnMitarbeiter != null ?
                                 new MitarbeiterDTO
                                 {
@@ -554,6 +555,7 @@ namespace ProjektZeiterfassung.Controllers
                         ZugewiesenAn = viewModel.ZugewiesenAn,
                         Prioritaet = viewModel.Prioritaet,
                         FaelligAm = viewModel.FaelligAm,
+                        Storypoints = viewModel.Storypoints,  // Neu hinzugefügt
                         Erledigt = false,
                         Position = maxPosition + 1
                     };
@@ -617,6 +619,7 @@ namespace ProjektZeiterfassung.Controllers
                     ZugewiesenAn = card.ZugewiesenAn,
                     Prioritaet = card.Prioritaet,
                     FaelligAm = card.FaelligAm,
+                    Storypoints = card.Storypoints,
                     Buckets = finalBuckets,
                     Mitarbeiter = mitarbeiter
                 };
@@ -670,6 +673,7 @@ namespace ProjektZeiterfassung.Controllers
                     card.ZugewiesenAn = viewModel.ZugewiesenAn;
                     card.Prioritaet = viewModel.Prioritaet;
                     card.FaelligAm = viewModel.FaelligAm;
+                    card.Storypoints = viewModel.Storypoints;  // Neu hinzugefügt
 
                     _context.Update(card);
                     await _context.SaveChangesAsync();
@@ -864,6 +868,174 @@ namespace ProjektZeiterfassung.Controllers
             }
         }
 
+        // Methode zum Hinzufügen von Kommentaren
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(int cardId, string comment)
+        {
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                return BadRequest(new { success = false, message = "Comment text is required" });
+            }
+
+            try
+            {
+                int? mitarbeiterId = null;
+                if (Request.Cookies.TryGetValue(MitarbeiterNrCookieName, out string mitarbeiterNrStr) &&
+                    int.TryParse(mitarbeiterNrStr, out int parsedMitarbeiterId))
+                {
+                    mitarbeiterId = parsedMitarbeiterId;
+                }
+                if (!mitarbeiterId.HasValue)
+                {
+                    return BadRequest(new { success = false, message = "Employee not identified" });
+                }
+
+                var card = await _context.KanbanCards.FirstOrDefaultAsync(c => c.CardID == cardId);
+                if (card == null)
+                {
+                    return NotFound(new { success = false, message = "Card not found" });
+                }
+
+                var kommentar = new KanbanComment
+                {
+                    CardID = cardId,
+                    Comment = comment,
+                    ErstelltVon = mitarbeiterId.Value,
+                    ErstelltAm = DateTime.Now
+                };
+
+                _context.KanbanComments.Add(kommentar);
+                await _context.SaveChangesAsync();
+
+                // Laden des Mitarbeiters für die Antwort
+                var mitarbeiter = await _context.Mitarbeiter.FindAsync(mitarbeiterId.Value);
+
+                return Json(new
+                {
+                    success = true,
+                    comment = new
+                    {
+                        commentId = kommentar.CommentID,
+                        text = kommentar.Comment,
+                        createdAt = kommentar.ErstelltAm.ToString("dd.MM.yyyy HH:mm"),
+                        createdBy = mitarbeiter != null ? $"{mitarbeiter.Vorname} {mitarbeiter.Name}" : "Unknown"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // Methode zum Bearbeiten von Kommentaren
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditComment(int commentId, string comment)
+        {
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                return BadRequest(new { success = false, message = "Comment text is required" });
+            }
+
+            try
+            {
+                var kommentar = await _context.KanbanComments.FindAsync(commentId);
+                if (kommentar == null)
+                {
+                    return NotFound(new { success = false, message = "Comment not found" });
+                }
+
+                int? mitarbeiterId = null;
+                if (Request.Cookies.TryGetValue(MitarbeiterNrCookieName, out string mitarbeiterNrStr) &&
+                    int.TryParse(mitarbeiterNrStr, out int parsedMitarbeiterId))
+                {
+                    mitarbeiterId = parsedMitarbeiterId;
+                }
+                // Nur der Ersteller darf bearbeiten
+                if (mitarbeiterId != kommentar.ErstelltVon)
+                {
+                    return Forbid();
+                }
+
+                kommentar.Comment = comment;
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // Methode zum Löschen von Kommentaren
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteComment(int commentId)
+        {
+            try
+            {
+                var kommentar = await _context.KanbanComments.FindAsync(commentId);
+                if (kommentar == null)
+                {
+                    return NotFound(new { success = false, message = "Comment not found" });
+                }
+
+                int? mitarbeiterId = null;
+                if (Request.Cookies.TryGetValue(MitarbeiterNrCookieName, out string mitarbeiterNrStr) &&
+                    int.TryParse(mitarbeiterNrStr, out int parsedMitarbeiterId))
+                {
+                    mitarbeiterId = parsedMitarbeiterId;
+                }
+                // Nur der Ersteller darf löschen
+                if (mitarbeiterId != kommentar.ErstelltVon)
+                {
+                    return Forbid();
+                }
+
+                _context.KanbanComments.Remove(kommentar);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // Methode zum Laden von Kommentaren einer Karte
+        [HttpGet]
+        public async Task<IActionResult> GetComments(int cardId)
+        {
+            try
+            {
+                var comments = await _context.KanbanComments
+                    .Include(c => c.ErstelltVonMitarbeiter)
+                    .Where(c => c.CardID == cardId)
+                    .OrderByDescending(c => c.ErstelltAm)
+                    .Select(c => new
+                    {
+                        commentId = c.CommentID,
+                        text = c.Comment,
+                        createdAt = c.ErstelltAm.ToString("dd.MM.yyyy HH:mm"),
+                        createdBy = c.ErstelltVonMitarbeiter != null
+                            ? $"{c.ErstelltVonMitarbeiter.Vorname} {c.ErstelltVonMitarbeiter.Name}"
+                            : "Unknown",
+                        createdById = c.ErstelltVon
+                    })
+                    .ToListAsync();
+
+                return Json(new { success = true, comments });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
         // Update the LoadFormData method to filter out inactive employees
         private async Task LoadFormData(KanbanCardViewModel viewModel)
         {
@@ -910,8 +1082,18 @@ namespace ProjektZeiterfassung.Controllers
         public string ProjektName { get; set; }
         public bool Erledigt { get; set; } // Fügen Sie dieses Feld hinzu
         public MitarbeiterDTO ZugewiesenAnMitarbeiter { get; set; }
+        public int? Storypoints { get; set; }
+        public List<CommentDTO> Comments { get; set; }
     }
 
+    public class CommentDTO
+    {
+        public int CommentID { get; set; }
+        public string Comment { get; set; }
+        public int ErstelltVon { get; set; }
+        public string ErstelltVonName { get; set; }
+        public DateTime ErstelltAm { get; set; }
+    }
     public class MitarbeiterDTO
     {
         public int MitarbeiterNr { get; set; }

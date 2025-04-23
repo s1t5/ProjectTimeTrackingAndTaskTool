@@ -39,5 +39,10 @@ namespace ProjektZeiterfassung.ViewModels
         public List<KanbanBucket>? Buckets { get; set; }
 
         public List<Mitarbeiter>? Mitarbeiter { get; set; }
+
+        [Display(Name = "Story Points")]
+        [Range(0, 100, ErrorMessage = "Story points must be between 0 and 100")]
+        public int? Storypoints { get; set; }
+        public List<KanbanCommentViewModel> Comments { get; set; } = new List<KanbanCommentViewModel>();
     }
 }

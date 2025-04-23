@@ -1,9 +1,7 @@
 ﻿@model ProjektZeiterfassung.ViewModels.KanbanCardViewModel
-
 @{
     ViewData["Title"] = "Edit Card";
 }
-
 <div class="row">
     <div class="col-md-8 mx-auto">
         <div class="card">
@@ -15,19 +13,16 @@
                     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                     <input type="hidden" asp-for="CardID" />
                     <input type="hidden" asp-for="ProjektID" />
-
                     <div class="form-group mb-3">
                         <label asp-for="Titel" class="control-label">Title</label>
                         <input asp-for="Titel" class="form-control" />
                         <span asp-validation-for="Titel" class="text-danger"></span>
                     </div>
-
                     <div class="form-group mb-3">
                         <label asp-for="Beschreibung" class="control-label">Description</label>
                         <textarea asp-for="Beschreibung" class="form-control" rows="4"></textarea>
                         <span asp-validation-for="Beschreibung" class="text-danger"></span>
                     </div>
-
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -61,9 +56,8 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label asp-for="Prioritaet" class="control-label">Priority</label>
                                 <select asp-for="Prioritaet" class="form-select">
@@ -75,15 +69,22 @@
                                 <span asp-validation-for="Prioritaet" class="text-danger"></span>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label asp-for="FaelligAm" class="control-label">Due Date</label>
                                 <input asp-for="FaelligAm" class="form-control" type="date" />
                                 <span asp-validation-for="FaelligAm" class="text-danger"></span>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label asp-for="Storypoints" class="control-label">Story Points</label>
+                                <input asp-for="Storypoints" class="form-control" type="number" min="0" max="100" />
+                                <span asp-validation-for="Storypoints" class="text-danger"></span>
+                                <small class="form-text text-muted">Estimate of effort (0-100)</small>
+                            </div>
+                        </div>
                     </div>
-
                     <div class="form-group mt-4">
                         <button type="submit" class="btn btn-primary">Save</button>
                         <a asp-action="Board" asp-route-id="@Model.ProjektID" class="btn btn-secondary">Cancel</a>
@@ -93,7 +94,6 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

@@ -17,6 +17,7 @@ namespace ProjektZeiterfassung.Data
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<KanbanBucket> KanbanBuckets { get; set; }
         public DbSet<KanbanCard> KanbanCards { get; set; }
+        public DbSet<KanbanComment> KanbanComments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -89,6 +90,11 @@ namespace ProjektZeiterfassung.Data
             modelBuilder.Entity<KanbanCard>().Property(c => c.Beschreibung)
                 .HasColumnType("text")
                 .IsRequired(false);
+
+            modelBuilder.Entity<KanbanComment>().ToTable("TKanbanComments");
+            modelBuilder.Entity<KanbanComment>().Property(c => c.Comment).HasColumnType("text").IsRequired(false);
+            modelBuilder.Entity<KanbanComment>().HasOne(c => c.Card).WithMany(c => c.Comments).HasForeignKey(c => c.CardID);
+            modelBuilder.Entity<KanbanComment>().HasOne(c => c.ErstelltVonMitarbeiter).WithMany().HasForeignKey(c => c.ErstelltVon);
         }
     }
 }
