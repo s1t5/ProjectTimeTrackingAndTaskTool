@@ -32,13 +32,19 @@
 
 <div style="display: flex; gap: 10px; justify-content: space-between;">
   <div style="flex: 1;">
-    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/2.png?raw=true" style="width:100%">
-  </div>
-  <div style="flex: 1;">
     <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/1.png?raw=true" style="width:100%">
   </div>
   <div style="flex: 1;">
+    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/2.png?raw=true" style="width:100%">
+  </div>
+  <div style="flex: 1;">
     <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/3.png?raw=true" style="width:100%">
+  </div>
+  <div style="flex: 1;">
+    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/4.png?raw=true" style="width:100%">
+  </div>
+  <div style="flex: 1;">
+    <img src="https://github.com/s1t5/ProjectTimeTrackingAndTaskTool/blob/main/Screenshots/5.png?raw=true" style="width:100%">
   </div>
 </div>
 
@@ -78,7 +84,7 @@ docker compose up
 ```
 
 6. Access the application:  
-- Web Interface: http://localhost:80 and login with default user 1 in the time tracking page 
+- Web Interface: http://YOURCONTAINER:80 and login with default user 1 in the time tracking page 
 
 
 ## 🐳 Docker Deployment  
