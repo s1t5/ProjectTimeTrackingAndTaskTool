@@ -113,9 +113,9 @@ docker compose down -v
 ```
 
 ## 🔐 Security Note  
-- 🔒 Change default passwords in `docker-compose.yml`  
+- 🔒 Change default passwords in `docker-compose.yml` as well as the `appsettings.jaon`
 - 🔐 Always use HTTPS and authentication provided by a reverse proxy in production  
-- 💾 Regular backups of `sql_data` volume recommended  
+- 💾 Regular backups of `sql_data` recommended  
 
 ## 🤝 Contributing  
 Contributions welcome! Please open an Issue or Pull Request.
@@ -123,6 +123,9 @@ Contributions welcome! Please open an Issue or Pull Request.
 ## 🚀 **Roadmap**  
 - Translation of the code and the database into English (the project was started in German at the beginning) 
 - Improve deployment process
+
+## 🚀 **In development**  
+- Portal for customer access so customers can be in volved and access their projects kanban board
 
 ---
 
