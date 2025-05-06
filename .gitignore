@@ -101,6 +101,7 @@ ClientBin/
 *.dbproj.schemaview
 *.pfx
 *.publishsettings
+*.db
 orleans.codegen.cs
 
 # SQL Server-Dateien
