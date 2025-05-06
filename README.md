@@ -79,8 +79,7 @@ docker compose up -d --build
 
 5. Restart docker stack:  
 ```bash
-docker compose down
-docker compose up
+docker compose restart
 ```
 
 6. Access the application:  
