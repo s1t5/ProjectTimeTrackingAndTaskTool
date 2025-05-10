@@ -117,7 +117,7 @@ docker compose down -v
 - 💾 Regular backups of `sql_data` recommended  
 
 ## 🤝 Contributing  
-Contributions welcome! Please open an Issue or Pull Request.
+Contributions welcome! Please open an Issue or Pull Request or contact me per mail at mail@s1t5.dev.
 
 ## 🚀 **Roadmap**  
 - Translation of the code and the database into English (the project was started in German at the beginning) 
