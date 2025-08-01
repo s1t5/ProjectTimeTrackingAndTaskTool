@@ -99,7 +99,8 @@ namespace ProjektZeiterfassung.Controllers
                     {
                         MitarbeiterNr = m.MitarbeiterNr,
                         Name = m.Name,
-                        Vorname = m.Vorname
+                        Vorname = m.Vorname,
+                        Inactive = m.Inactive
                     })
                     .FirstOrDefaultAsync();
                 if (mitarbeiter == null)

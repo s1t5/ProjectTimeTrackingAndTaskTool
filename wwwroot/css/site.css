@@ -25,11 +25,11 @@ html {
     line-height: 60px;
   }
   
-  /* Modernes Indigo/Purpur Farbschema */
+  /* Modernes Blau Farbschema */
   :root {
-    --primary: #6366f1;       /* Modernes Indigo */
-    --primary-hover: #4f46e5; /* Dunkleres Indigo */
-    --primary-light: #eef2ff; /* Helles Indigo */
+    --primary: #3b82f6;       /* Modernes Blau */
+    --primary-hover: #2563eb; /* Dunkleres Blau */
+    --primary-light: #dbeafe; /* Helles Blau */
     --secondary: #64748b;     /* Blaugrau */
     --success: #10b981;       /* Smaragdgrün */
     --danger: #ef4444;        /* Rot */
@@ -67,7 +67,7 @@ html {
   
   /* Theme Toggle Button */
   .btn-theme-toggle {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     border: none;
     border-radius: 50%;
     width: 40px;
@@ -105,7 +105,7 @@ html {
     box-shadow: var(--box-shadow);
     border: none;
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
   }
   
   .navbar-brand {
@@ -218,7 +218,7 @@ html {
   
   .form-control:focus, .form-select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
     background-color: var(--input-bg);
     color: var(--text-color);
   }
@@ -313,7 +313,7 @@ html {
   }
   
   .alert-primary {
-    background-color: rgba(99, 102, 241, 0.15);
+    background-color: rgba(59, 130, 246, 0.15);
     color: var(--text-color);
     border-left: 4px solid var(--primary);
   }
@@ -340,7 +340,7 @@ html {
   }
   
   .accordion-button:not(.collapsed) {
-    background-color: rgba(99, 102, 241, 0.15);
+    background-color: rgba(59, 130, 246, 0.15);
     color: var(--primary);
   }
   
@@ -371,7 +371,7 @@ html {
   }
   
   .modal-header {
-    background-color: rgba(99, 102, 241, 0.15);
+    background-color: rgba(59, 130, 246, 0.15);
     border-bottom: 1px solid var(--border-color);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
   }
